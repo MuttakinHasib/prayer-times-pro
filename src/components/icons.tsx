@@ -4,6 +4,7 @@
 //   asr cloud.sun.fill · maghrib sunset.fill · isha moon.stars.fill
 import {
   CloudSun,
+  Haze,
   type LucideProps,
   Moon,
   MoonStar,
@@ -30,6 +31,7 @@ export function PrayerIcon({ prayer, ...p }: LucideProps & { prayer: string }) {
     case "fajr":
       return <Sunrise {...p} />;
     case "sunrise":
+      return <Haze {...p} />;
     case "ishraq":
       return <SunMedium {...p} />;
     case "dhuhr":
