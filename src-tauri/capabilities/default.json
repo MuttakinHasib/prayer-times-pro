@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Core capabilities for the panel window (M2: tray + panel + state events)",
-  "windows": ["panel", "settings", "focus", "onboarding"],
+  "windows": ["panel", "backdrop", "settings", "focus", "onboarding"],
   "permissions": [
     "core:default",
     "core:event:default",
@@ -10,6 +10,7 @@
     "core:window:allow-hide",
     "core:window:allow-set-focus",
     "core:window:allow-set-position",
+    "core:window:allow-set-size",
     "core:window:allow-outer-size",
     "core:window:allow-is-visible",
     "core:app:default",

@@ -27,5 +27,11 @@ chrono = { version = "0.4", default-features = false, features = ["std", "clock"
 chrono-tz = "0.10"
 iana-time-zone = "0.1"
 
+# macOS-only: convert the panel window into a non-activating NSPanel so it
+# behaves like a native menu-bar popover (vanishes on click-outside, never
+# activates the app or minimizes). User-approved external dependency.
+[target.'cfg(target_os = "macos")'.dependencies]
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
+
 # NOTE: the optimized `[profile.release]` lives in the workspace-root Cargo.toml —
 # Cargo only honors `[profile.*]` from the root manifest in a workspace.

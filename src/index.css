@@ -33,4 +33,10 @@
     user-select: none;
     cursor: default;
   }
+
+  /* Menu-bar popover: no focus rings (the panel auto-focuses a button on show). */
+  *:focus,
+  *:focus-visible {
+    outline: none !important;
+  }
 }
