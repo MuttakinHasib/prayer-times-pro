@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   checkForUpdates,
-  fitPanel,
   getPrayerState,
   hidePanel,
   onStateChanged,
   openSettings,
   quitApp,
+  reportContentSize,
   type PrayerInstant,
   type PrayerState,
 } from "../../lib/ipc";
@@ -51,9 +51,9 @@ export default function Panel() {
   useLayoutEffect(() => {
     const el = rootRef.current;
     if (!el) return;
-    const fit = () => void fitPanel(el.offsetWidth, el.offsetHeight);
-    fit();
-    const ro = new ResizeObserver(fit);
+    const report = () => void reportContentSize(el.offsetWidth, el.offsetHeight);
+    report();
+    const ro = new ResizeObserver(report);
     ro.observe(el);
     return () => ro.disconnect();
   }, [state]);
