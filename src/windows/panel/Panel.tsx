@@ -81,8 +81,8 @@ export default function Panel() {
           <div className="mt-3 flex items-center gap-2.5">
             <PrayerIcon
               prayer={next.prayer}
-              width={22}
-              height={22}
+              size={21}
+              strokeWidth={2}
               className="shrink-0 text-accent-emphasis"
             />
             <div className="flex-1">
@@ -121,13 +121,16 @@ export default function Panel() {
               <span
                 className={`flex w-5 justify-center ${isNext ? "text-accent-emphasis" : "text-content-muted"}`}
               >
-                <PrayerIcon prayer={p.prayer} />
+                <PrayerIcon prayer={p.prayer} size={16} strokeWidth={2} />
               </span>
               <span
                 className={[
-                  "flex-1 font-medium",
-                  isNext && "font-bold text-accent-emphasis",
-                  minor && !isNext && "text-content-muted",
+                  "flex-1",
+                  isNext
+                    ? "font-semibold text-accent-emphasis"
+                    : minor
+                      ? "text-content-muted"
+                      : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -141,9 +144,9 @@ export default function Panel() {
               )}
               <span
                 className={[
-                  "tabular-nums font-medium",
+                  "tabular-nums",
                   isNext
-                    ? "font-bold text-accent-emphasis"
+                    ? "font-semibold text-accent-emphasis"
                     : minor
                       ? "text-content-muted"
                       : "text-content",
@@ -160,19 +163,11 @@ export default function Panel() {
       <div className="h-px bg-border" />
       <div className="flex flex-col gap-1 px-4 py-2 text-xs text-content-muted">
         <div className="flex items-start gap-2">
-          <MoonIcon
-            width={13}
-            height={13}
-            className="mt-0.5 shrink-0 text-content-subtle"
-          />
+          <MoonIcon size={14} className="mt-px shrink-0 text-content-subtle" />
           <span>{state.method_name}</span>
         </div>
         <div className="flex items-start gap-2">
-          <PinIcon
-            width={13}
-            height={13}
-            className="mt-0.5 shrink-0 text-content-subtle"
-          />
+          <PinIcon size={14} className="mt-px shrink-0 text-content-subtle" />
           <span>
             {state.latitude.toFixed(4)}, {state.longitude.toFixed(4)} ·{" "}
             {state.tz}
@@ -185,20 +180,17 @@ export default function Panel() {
       <div className="flex flex-col p-1.5">
         <FooterButton
           onClick={() => openSettings().then(hidePanel)}
-          icon={<GearIcon width={15} height={15} />}
+          icon={<GearIcon size={16} />}
         >
           Settings…
         </FooterButton>
         <FooterButton
           onClick={() => checkForUpdates()}
-          icon={<RefreshIcon width={15} height={15} />}
+          icon={<RefreshIcon size={16} />}
         >
           Check for Updates…
         </FooterButton>
-        <FooterButton
-          onClick={() => quitApp()}
-          icon={<PowerIcon width={15} height={15} />}
-        >
+        <FooterButton onClick={() => quitApp()} icon={<PowerIcon size={16} />}>
           Quit
         </FooterButton>
       </div>
