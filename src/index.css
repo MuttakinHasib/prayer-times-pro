@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Design tokens (Tailwind v4 `@theme`) — semantic, role-based names.
+   - accent:   brand green, the primary highlight (next prayer, actions)
+   - surface:  dark translucent glass backgrounds
+   - content:  text/foreground hierarchy (default → muted → subtle)
+   - border:   hairline separators and outlines */
+@theme {
+  --color-accent: #2e953f;
+  --color-accent-emphasis: #36c14e;
+
+  --color-surface: rgba(28, 28, 30, 0.82);
+  --color-surface-hover: rgba(255, 255, 255, 0.08);
+
+  --color-content: #f2f2f7;
+  --color-content-muted: rgba(235, 235, 245, 0.62);
+  --color-content-subtle: rgba(235, 235, 245, 0.4);
+
+  --color-border: rgba(255, 255, 255, 0.1);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+}
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    background: transparent;
+    overflow: hidden;
+    font-family: var(--font-sans);
+    color: var(--color-content);
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+  }
+}
