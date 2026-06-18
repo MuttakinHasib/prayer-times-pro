@@ -4,16 +4,25 @@
 
 mod state;
 
+use std::sync::Mutex;
+
 use chrono::Utc;
 use state::{AppConfig, Clock, PrayerState, SharedClock};
 use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Emitter, Manager, WebviewUrl, WebviewWindowBuilder, WindowEvent,
+    Emitter, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindowBuilder, WindowEvent,
 };
 
 const PANEL_LABEL: &str = "panel";
 const TRAY_ID: &str = "tray";
 const STATE_EVENT: &str = "prayer://state-changed";
+
+/// The intended top-left (physical px) of the panel, captured on tray click so
+/// `fit_panel` can re-pin it after a content resize. (macOS anchors a resize at
+/// the bottom-left, which would otherwise push the panel's top under the menu
+/// bar when the window grows to fit taller content.)
+#[derive(Default)]
+struct PanelAnchor(Mutex<Option<(i32, i32)>>);
 
 /// Current rendered state — called by the panel on mount and after navigation.
 #[tauri::command]
@@ -35,6 +44,20 @@ fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }
 
+/// Resize the panel to the content's measured logical size and re-pin its
+/// top-left to the captured anchor, so the native shadow hugs the card and the
+/// top never slips under the menu bar. Called by the frontend's ResizeObserver.
+#[tauri::command]
+fn fit_panel(app: tauri::AppHandle, anchor: tauri::State<'_, PanelAnchor>, width: f64, height: f64) {
+    let Some(panel) = app.get_webview_window(PANEL_LABEL) else {
+        return;
+    };
+    let _ = panel.set_size(LogicalSize::new(width, height));
+    if let Some((x, y)) = *anchor.0.lock().expect("anchor lock") {
+        let _ = panel.set_position(PhysicalPosition { x, y });
+    }
+}
+
 /// M2 stubs — fleshed out in later milestones (M3 settings, M9 updater).
 #[tauri::command]
 fn open_settings(app: tauri::AppHandle) {
@@ -51,10 +74,12 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(SharedClock::new(Clock::new(AppConfig::default())))
+        .manage(PanelAnchor::default())
         .invoke_handler(tauri::generate_handler![
             get_prayer_state,
             hide_panel,
             quit_app,
+            fit_panel,
             open_settings,
             check_for_updates
         ])
@@ -77,7 +102,7 @@ pub fn run() {
 fn build_panel_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     let win = WebviewWindowBuilder::new(app, PANEL_LABEL, WebviewUrl::App("index.html".into()))
         .title("Prayer Times")
-        .inner_size(360.0, 560.0) // resized to fit content by the frontend
+        .inner_size(312.0, 560.0) // resized to fit content by the frontend
         .resizable(false)
         .decorations(false)
         .transparent(true)
@@ -154,11 +179,13 @@ fn toggle_panel(app: &tauri::AppHandle, anchor: Option<(i32, i32, i32, i32)>) {
 
     // Position the panel's top edge just below the tray icon, right-aligned to it
     // (matching a native menu-bar popover dropping down from the status item).
+    // Capture the top-left so `fit_panel` can re-pin it after the content resize.
     if let Some((ix, iy, iw, ih)) = anchor {
         if let Ok(win_size) = panel.outer_size() {
-            let x = ix + iw - (win_size.width as i32);
+            let x = (ix + iw - win_size.width as i32).max(0);
             let y = iy + ih;
-            let _ = panel.set_position(tauri::PhysicalPosition { x: x.max(0), y });
+            let _ = panel.set_position(PhysicalPosition { x, y });
+            *app.state::<PanelAnchor>().0.lock().expect("anchor lock") = Some((x, y));
         }
     }
     let _ = panel.show();

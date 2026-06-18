@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import {
   checkForUpdates,
+  fitPanel,
   getPrayerState,
   hidePanel,
   onStateChanged,
@@ -51,10 +51,7 @@ export default function Panel() {
   useLayoutEffect(() => {
     const el = rootRef.current;
     if (!el) return;
-    const win = getCurrentWindow();
-    const fit = () => {
-      void win.setSize(new LogicalSize(el.offsetWidth, el.offsetHeight));
-    };
+    const fit = () => void fitPanel(el.offsetWidth, el.offsetHeight);
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(el);
@@ -75,7 +72,7 @@ export default function Panel() {
   }, [state]);
 
   const shell =
-    "w-[360px] overflow-hidden rounded-[12px] border-[0.5px] border-white/10 bg-surface text-content backdrop-blur-[30px] backdrop-saturate-[1.8]";
+    "w-[312px] overflow-hidden rounded-[12px] border-[0.5px] border-white/10 bg-surface text-content backdrop-blur-[30px] backdrop-saturate-[1.8]";
 
   if (!state) return <div ref={rootRef} className={`${shell} min-h-[200px]`} />;
 
@@ -90,28 +87,28 @@ export default function Panel() {
           {longDate(now, state.tz).toUpperCase()}
         </div>
         {state.show_hijri && (
-          <div className="mt-0.5 text-xs text-content-subtle">
+          <div className="mt-0.5 text-[11px] text-content-subtle">
             {hijriDate(now, state.tz, state.hijri_adjustment)}
           </div>
         )}
 
         {next && (
-          <div className="mt-3 flex items-center gap-2.5">
+          <div className="mt-2.5 flex items-center gap-2.5">
             <PrayerIcon
               prayer={next.prayer}
-              size={21}
+              size={20}
               strokeWidth={2}
               className="shrink-0 text-accent-emphasis"
             />
             <div className="flex-1">
-              <div className="text-[22px] font-bold leading-tight tracking-[-0.01em]">
+              <div className="text-[20px] font-bold leading-tight tracking-[-0.01em]">
                 {PRAYER_NAMES[next.prayer] ?? next.prayer}
               </div>
-              <div className="mt-px text-[13px] tabular-nums text-content-muted">
+              <div className="mt-px text-[12.5px] tabular-nums text-content-muted">
                 in {countdownLong(secsToNext)}
               </div>
             </div>
-            <div className="text-lg font-semibold tabular-nums text-accent-emphasis">
+            <div className="text-[17px] font-semibold tabular-nums text-accent-emphasis">
               {clock(next.at_ms, state.tz)}
             </div>
           </div>
@@ -129,7 +126,7 @@ export default function Panel() {
             <div
               key={`${p.prayer}-${p.at_ms}`}
               className={[
-                "flex items-center gap-2.5 rounded-lg px-2 py-[7px] text-[13.5px]",
+                "flex items-center gap-2.5 rounded-lg px-2 py-[5px] text-[13px]",
                 isNext && "bg-accent/[0.18]",
                 isPast && "opacity-40",
               ]
