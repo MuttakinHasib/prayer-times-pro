@@ -33,9 +33,9 @@ export const STATE_EVENT = "prayer://state-changed";
 
 export const getPrayerState = () => invoke<PrayerState>("get_prayer_state");
 export const hidePanel = () => invoke<void>("hide_panel");
-/** Resize the panel window to the measured content size and re-pin its top-left. */
-export const fitPanel = (width: number, height: number) =>
-  invoke<void>("fit_panel", { width, height });
+/** Report the panel's measured content size so Rust can size the window on show. */
+export const reportContentSize = (width: number, height: number) =>
+  invoke<void>("report_content_size", { width, height });
 export const quitApp = () => invoke<void>("quit_app");
 export const openSettings = () => invoke<void>("open_settings");
 export const checkForUpdates = () => invoke<void>("check_for_updates");
