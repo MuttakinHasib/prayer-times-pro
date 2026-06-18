@@ -98,15 +98,25 @@ fn build_panel_window(app: &tauri::AppHandle) -> tauri::Result<()> {
 /// Build the tray icon. The icon carries the glyph; `set_title` shows the live
 /// countdown text (macOS). Left-click toggles the panel.
 fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
-    // Mosque glyph (from the macOS app's asset), embedded at compile time and
-    // rendered as a template so macOS tints it for the light/dark menu bar.
-    let mosque = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-mosque@2x.png"))?;
-
-    TrayIconBuilder::with_id(TRAY_ID)
-        .icon(mosque)
-        .icon_as_template(true)
+    let mut builder = TrayIconBuilder::with_id(TRAY_ID)
         .title("Prayer Times")
-        .tooltip("Prayer Times")
+        .tooltip("Prayer Times");
+
+    // Mosque glyph (from the macOS app's asset), embedded at compile time and
+    // rendered as a template so macOS tints it for the light/dark menu bar. If
+    // the embedded PNG ever fails to decode, fall back to the default icon (and
+    // ultimately a title-only tray) rather than aborting startup.
+    match tauri::image::Image::from_bytes(include_bytes!("../icons/tray-mosque@2x.png")) {
+        Ok(icon) => builder = builder.icon(icon).icon_as_template(true),
+        Err(err) => {
+            eprintln!("tray: mosque icon decode failed ({err}); using default icon");
+            if let Some(icon) = app.default_window_icon().cloned() {
+                builder = builder.icon(icon);
+            }
+        }
+    }
+
+    builder
         .on_tray_icon_event(|tray, event| {
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,

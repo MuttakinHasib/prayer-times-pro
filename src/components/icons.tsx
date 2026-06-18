@@ -20,7 +20,7 @@ const Svg = ({ children, ...p }: P & { children: React.ReactNode }) => (
 );
 
 /** Fajr — dawn: sun rising above the horizon with an up arrow. */
-export const SunriseIcon = (p: P) => (
+export const DawnIcon = (p: P) => (
   <Svg {...p}>
     <path d="M3 18h18M7.5 14a4.5 4.5 0 0 1 9 0" />
     <path d="M12 3v5M12 3 9.5 5.5M12 3l2.5 2.5M2 18.5h2M20 18.5h2" />
@@ -91,7 +91,7 @@ export const PinIcon = (p: P) => (
 export function PrayerIcon({ prayer, ...p }: P & { prayer: string }) {
   switch (prayer) {
     case "fajr":
-      return <SunriseIcon {...p} />;
+      return <DawnIcon {...p} />;
     case "sunrise":
       return <SunHorizonIcon {...p} />;
     case "dhuhr":

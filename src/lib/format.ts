@@ -11,16 +11,32 @@ export function clock(ms: number, tz: string): string {
   }).format(new Date(ms));
 }
 
+// Intl.DateTimeFormat construction is relatively expensive; the panel re-renders
+// every second, so memoize one formatter per timezone.
+const longDateFormatters = new Map<string, Intl.DateTimeFormat>();
+function longDateFormatter(tz: string): Intl.DateTimeFormat {
+  let f = longDateFormatters.get(tz);
+  if (!f) {
+    f = new Intl.DateTimeFormat(undefined, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: tz,
+    });
+    longDateFormatters.set(tz, f);
+  }
+  return f;
+}
+
 /** Long date in `tz`, day-first to match the reference app, e.g.
  *  "Friday, 19 June, 2026". Field order is fixed (locale only supplies the
  *  weekday/month names) so it doesn't flip to month-first under en-US. */
 export function longDate(ms: number, tz: string): string {
-  const d = new Date(ms);
-  const part = (opt: Intl.DateTimeFormatOptions) =>
-    new Intl.DateTimeFormat(undefined, { ...opt, timeZone: tz }).format(d);
-  return `${part({ weekday: "long" })}, ${part({ day: "numeric" })} ${part({
-    month: "long",
-  })}, ${part({ year: "numeric" })}`;
+  const parts = longDateFormatter(tz).formatToParts(new Date(ms));
+  const get = (t: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("weekday")}, ${get("day")} ${get("month")}, ${get("year")}`;
 }
 
 /** Umm al-Qura Hijri date, e.g. "3 Muharram 1448 AH", with a whole-day shift. */
