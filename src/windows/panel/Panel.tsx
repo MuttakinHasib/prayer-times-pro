@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import {
   checkForUpdates,
   getPrayerState,
@@ -43,6 +44,23 @@ export default function Panel() {
     };
   }, []);
 
+  // Resize the (borderless, transparent) window to exactly fit the panel, so the
+  // native window shadow hugs the rounded card instead of outlining a taller,
+  // mostly-empty window rect.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const win = getCurrentWindow();
+    const fit = () => {
+      void win.setSize(new LogicalSize(el.offsetWidth, el.offsetHeight));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [state]);
+
   // Build the rendered list (optionally inserting Ishraq right after Sunrise).
   const rows = useMemo<PrayerInstant[]>(() => {
     if (!state) return [];
@@ -57,15 +75,15 @@ export default function Panel() {
   }, [state]);
 
   const shell =
-    "m-1.5 overflow-hidden rounded-[13px] border-[0.5px] border-white/12 bg-surface text-content shadow-[0_12px_40px_rgba(0,0,0,0.45)] backdrop-blur-[30px] backdrop-saturate-[1.8]";
+    "w-[360px] overflow-hidden rounded-[12px] border-[0.5px] border-white/10 bg-surface text-content backdrop-blur-[30px] backdrop-saturate-[1.8]";
 
-  if (!state) return <div className={`${shell} min-h-[200px]`} />;
+  if (!state) return <div ref={rootRef} className={`${shell} min-h-[200px]`} />;
 
   const next = state.next;
   const secsToNext = next ? Math.max(0, (next.at_ms - now) / 1000) : 0;
 
   return (
-    <div className={shell}>
+    <div ref={rootRef} className={shell}>
       {/* Header: date, Hijri, next-prayer hero */}
       <div className="px-4 pb-3 pt-3.5">
         <div className="text-[11px] font-semibold tracking-[0.05em] text-content-muted">

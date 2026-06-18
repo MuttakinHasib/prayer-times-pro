@@ -77,10 +77,11 @@ pub fn run() {
 fn build_panel_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     let win = WebviewWindowBuilder::new(app, PANEL_LABEL, WebviewUrl::App("index.html".into()))
         .title("Prayer Times")
-        .inner_size(360.0, 560.0)
+        .inner_size(360.0, 560.0) // resized to fit content by the frontend
         .resizable(false)
         .decorations(false)
         .transparent(true)
+        .shadow(true)
         .always_on_top(true)
         .skip_taskbar(true)
         .visible(false)
