@@ -38,7 +38,7 @@ export default function Panel() {
     const unlisten = onStateChanged(setState);
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => {
-      unlisten.then((fn) => fn());
+      unlisten.then((fn) => fn()).catch(() => {});
       clearInterval(id);
     };
   }, []);

@@ -98,16 +98,17 @@ fn build_panel_window(app: &tauri::AppHandle) -> tauri::Result<()> {
 /// Build the tray icon. The icon carries the glyph; `set_title` shows the live
 /// countdown text (macOS). Left-click toggles the panel.
 fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
-    let icon = app
-        .default_window_icon()
-        .cloned()
-        .expect("bundled default window icon");
-
-    TrayIconBuilder::with_id(TRAY_ID)
-        .icon(icon)
-        .icon_as_template(true)
+    let mut builder = TrayIconBuilder::with_id(TRAY_ID)
         .title("Prayer Times")
-        .tooltip("Prayer Times")
+        .tooltip("Prayer Times");
+
+    // The bundled icon should always be present; if it somehow isn't, fall back
+    // to a title-only tray (macOS shows the countdown text) rather than panicking.
+    if let Some(icon) = app.default_window_icon().cloned() {
+        builder = builder.icon(icon).icon_as_template(true);
+    }
+
+    builder
         .on_tray_icon_event(|tray, event| {
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,
@@ -162,7 +163,7 @@ fn spawn_tick_loop(app: tauri::AppHandle) {
     std::thread::spawn(move || loop {
         std::thread::sleep(std::time::Duration::from_secs(1));
         let app = app.clone();
-        let _ = app.clone().run_on_main_thread(move || {
+        let scheduled = app.clone().run_on_main_thread(move || {
             let clock_state = app.state::<SharedClock>();
             let mut clock = clock_state.lock().expect("clock lock");
             clock.tick(Utc::now());
@@ -174,5 +175,9 @@ fn spawn_tick_loop(app: tauri::AppHandle) {
                 let _ = app.emit(STATE_EVENT, snapshot);
             }
         });
+        // The main event loop is gone (app exiting) — stop, don't strand the thread.
+        if scheduled.is_err() {
+            break;
+        }
     });
 }

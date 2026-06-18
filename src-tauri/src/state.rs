@@ -181,6 +181,9 @@ impl Clock {
         self.today = Self::compute(&self.config, self.now, 0);
         self.tomorrow = Self::compute(&self.config, self.now, 1);
         self.last_day = self.now.date_naive();
+        // Force the next `should_emit` to push: a config change can leave the
+        // (day, next-prayer) signature unchanged while the actual times moved.
+        self.emitted = None;
     }
 
     /// The upcoming prayer: next today, else tomorrow's Fajr.
