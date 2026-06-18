@@ -33,7 +33,10 @@ impl HighLatitudeRule {
             HighLatitudeRule::Automatic | HighLatitudeRule::None => 0.0,
             HighLatitudeRule::MiddleOfNight => 1.0 / 2.0,
             HighLatitudeRule::SeventhOfNight => 1.0 / 7.0,
-            HighLatitudeRule::AngleBased => angle / 60.0,
+            // Clamp to a whole night: a misconfigured (e.g. manual) angle above
+            // 60° would otherwise push the clamp boundary past the actual night.
+            // No-op for real twilight angles (15–20° → ≤0.33).
+            HighLatitudeRule::AngleBased => (angle / 60.0).clamp(0.0, 1.0),
         }
     }
 
@@ -42,6 +45,13 @@ impl HighLatitudeRule {
     /// that precede `base` (Fajr). A `NaN` input (angle never reached) is forced
     /// to the clamp boundary.
     pub(crate) fn clamp(self, time: f64, base: f64, angle: f64, night: f64, before: bool) -> f64 {
+        // `Automatic` must be resolved to a concrete rule by the app layer before
+        // reaching the engine. Surface that contract violation in dev/tests; fall
+        // back to the safe `None` behaviour (return the raw time) in release.
+        debug_assert!(
+            self != HighLatitudeRule::Automatic,
+            "Automatic high-latitude rule must be resolved to a concrete rule before the engine"
+        );
         if self == HighLatitudeRule::None || self == HighLatitudeRule::Automatic {
             return time;
         }
