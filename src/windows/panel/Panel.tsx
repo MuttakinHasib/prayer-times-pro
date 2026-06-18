@@ -82,12 +82,12 @@ export default function Panel() {
   return (
     <div ref={rootRef} className={shell}>
       {/* Header: date, Hijri, next-prayer hero */}
-      <div className="px-4 pb-3 pt-3.5">
-        <div className="text-[11px] font-semibold tracking-[0.05em] text-content-muted">
+      <div className="px-4 pb-2.5 pt-3">
+        <div className="text-[10px] font-semibold tracking-[0.05em] text-content-muted">
           {longDate(now, state.tz).toUpperCase()}
         </div>
         {state.show_hijri && (
-          <div className="mt-0.5 text-[11px] text-content-subtle">
+          <div className="mt-0.5 text-[10px] text-content-subtle">
             {hijriDate(now, state.tz, state.hijri_adjustment)}
           </div>
         )}
@@ -96,19 +96,19 @@ export default function Panel() {
           <div className="mt-2.5 flex items-center gap-2.5">
             <PrayerIcon
               prayer={next.prayer}
-              size={20}
+              size={18}
               strokeWidth={2}
               className="shrink-0 text-accent-emphasis"
             />
             <div className="flex-1">
-              <div className="text-[20px] font-bold leading-tight tracking-[-0.01em]">
+              <div className="text-[17px] font-bold leading-tight tracking-[-0.01em]">
                 {PRAYER_NAMES[next.prayer] ?? next.prayer}
               </div>
-              <div className="mt-px text-[12.5px] tabular-nums text-content-muted">
+              <div className="mt-px text-[11px] tabular-nums text-content-muted">
                 in {countdownLong(secsToNext)}
               </div>
             </div>
-            <div className="text-[17px] font-semibold tabular-nums text-accent-emphasis">
+            <div className="text-[14px] font-semibold tabular-nums text-accent-emphasis">
               {clock(next.at_ms, state.tz)}
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function Panel() {
             <div
               key={`${p.prayer}-${p.at_ms}`}
               className={[
-                "flex items-center gap-2.5 rounded-lg px-2 py-[5px] text-[13px]",
+                "flex items-center gap-2.5 rounded-lg px-2 py-[4px] text-[12px]",
                 isNext && "bg-accent/[0.18]",
                 isPast && "opacity-40",
               ]
@@ -134,9 +134,9 @@ export default function Panel() {
                 .join(" ")}
             >
               <span
-                className={`flex w-5 justify-center ${isNext ? "text-accent-emphasis" : "text-content-muted"}`}
+                className={`flex w-[18px] justify-center ${isNext ? "text-accent-emphasis" : "text-content-muted"}`}
               >
-                <PrayerIcon prayer={p.prayer} size={16} strokeWidth={2} />
+                <PrayerIcon prayer={p.prayer} size={15} strokeWidth={2} />
               </span>
               <span
                 className={[
@@ -153,7 +153,7 @@ export default function Panel() {
                 {PRAYER_NAMES[p.prayer] ?? p.prayer}
               </span>
               {isNext && (
-                <span className="rounded-full bg-accent/[0.22] px-1.5 py-px text-[11px] font-semibold tabular-nums text-accent-emphasis">
+                <span className="rounded-full bg-accent/[0.22] px-1.5 py-px text-[10px] font-semibold tabular-nums text-accent-emphasis">
                   {shortCountdown(secsToNext)}
                 </span>
               )}
@@ -176,13 +176,13 @@ export default function Panel() {
 
       {/* Summary: method + location */}
       <div className="h-px bg-border" />
-      <div className="flex flex-col gap-1 px-4 py-2 text-xs text-content-muted">
+      <div className="flex flex-col gap-1 px-4 py-2 text-[11px] text-content-muted">
         <div className="flex items-start gap-2">
-          <MoonIcon size={14} className="mt-px shrink-0 text-content-subtle" />
+          <MoonIcon size={13} className="mt-px shrink-0 text-content-subtle" />
           <span>{state.method_name}</span>
         </div>
         <div className="flex items-start gap-2">
-          <PinIcon size={14} className="mt-px shrink-0 text-content-subtle" />
+          <PinIcon size={13} className="mt-px shrink-0 text-content-subtle" />
           <span>
             {state.latitude.toFixed(4)}, {state.longitude.toFixed(4)} ·{" "}
             {state.tz}
@@ -195,17 +195,17 @@ export default function Panel() {
       <div className="flex flex-col p-1.5">
         <FooterButton
           onClick={() => openSettings().then(hidePanel)}
-          icon={<GearIcon size={16} />}
+          icon={<GearIcon size={15} />}
         >
           Settings…
         </FooterButton>
         <FooterButton
           onClick={() => checkForUpdates()}
-          icon={<RefreshIcon size={16} />}
+          icon={<RefreshIcon size={15} />}
         >
           Check for Updates…
         </FooterButton>
-        <FooterButton onClick={() => quitApp()} icon={<PowerIcon size={16} />}>
+        <FooterButton onClick={() => quitApp()} icon={<PowerIcon size={15} />}>
           Quit
         </FooterButton>
       </div>
@@ -225,7 +225,7 @@ function FooterButton({
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-[7px] text-left text-[13.5px] text-content [&>svg]:text-content-muted hover:bg-surface-hover"
+      className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-[6px] text-left text-[12.5px] text-content [&>svg]:text-content-muted hover:bg-surface-hover"
     >
       {icon}
       {children}
