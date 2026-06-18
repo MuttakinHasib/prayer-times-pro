@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Rust / Cargo build artifacts (Cargo.lock is committed — this is an app workspace)
+/target
+src-tauri/target
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
