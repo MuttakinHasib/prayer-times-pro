@@ -77,7 +77,7 @@ pub fn run() {
 fn build_panel_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     let win = WebviewWindowBuilder::new(app, PANEL_LABEL, WebviewUrl::App("index.html".into()))
         .title("Prayer Times")
-        .inner_size(320.0, 540.0)
+        .inner_size(360.0, 560.0)
         .resizable(false)
         .decorations(false)
         .transparent(true)
@@ -98,17 +98,15 @@ fn build_panel_window(app: &tauri::AppHandle) -> tauri::Result<()> {
 /// Build the tray icon. The icon carries the glyph; `set_title` shows the live
 /// countdown text (macOS). Left-click toggles the panel.
 fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
-    let mut builder = TrayIconBuilder::with_id(TRAY_ID)
+    // Mosque glyph (from the macOS app's asset), embedded at compile time and
+    // rendered as a template so macOS tints it for the light/dark menu bar.
+    let mosque = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-mosque@2x.png"))?;
+
+    TrayIconBuilder::with_id(TRAY_ID)
+        .icon(mosque)
+        .icon_as_template(true)
         .title("Prayer Times")
-        .tooltip("Prayer Times");
-
-    // The bundled icon should always be present; if it somehow isn't, fall back
-    // to a title-only tray (macOS shows the countdown text) rather than panicking.
-    if let Some(icon) = app.default_window_icon().cloned() {
-        builder = builder.icon(icon).icon_as_template(true);
-    }
-
-    builder
+        .tooltip("Prayer Times")
         .on_tray_icon_event(|tray, event| {
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,

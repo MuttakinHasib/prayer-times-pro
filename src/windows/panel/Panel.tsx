@@ -64,16 +64,10 @@ export default function Panel() {
   const next = state.next;
   const secsToNext = next ? Math.max(0, (next.at_ms - now) / 1000) : 0;
 
-  const prev = state.times.filter((t) => t.at_ms <= now).at(-1);
-  const progress =
-    prev && next && next.at_ms > prev.at_ms
-      ? Math.max(0, Math.min(1, (now - prev.at_ms) / (next.at_ms - prev.at_ms)))
-      : 0;
-
   return (
     <div className={shell}>
-      {/* Header: date, Hijri, next-prayer hero, progress */}
-      <div className="px-4 pb-2.5 pt-3.5">
+      {/* Header: date, Hijri, next-prayer hero */}
+      <div className="px-4 pb-3 pt-3.5">
         <div className="text-[11px] font-semibold tracking-[0.05em] text-content-muted">
           {longDate(now, state.tz).toUpperCase()}
         </div>
@@ -104,13 +98,6 @@ export default function Panel() {
             </div>
           </div>
         )}
-
-        <div className="mt-3 h-1 overflow-hidden rounded-[3px] bg-white/10">
-          <i
-            className="block h-full rounded-[3px] bg-accent"
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
       </div>
 
       {/* Times list */}
@@ -172,19 +159,19 @@ export default function Panel() {
       {/* Summary: method + location */}
       <div className="h-px bg-border" />
       <div className="flex flex-col gap-1 px-4 py-2 text-xs text-content-muted">
-        <div className="flex items-center gap-2">
+        <div className="flex items-start gap-2">
           <MoonIcon
             width={13}
             height={13}
-            className="shrink-0 text-content-subtle"
+            className="mt-0.5 shrink-0 text-content-subtle"
           />
           <span>{state.method_name}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-start gap-2">
           <PinIcon
             width={13}
             height={13}
-            className="shrink-0 text-content-subtle"
+            className="mt-0.5 shrink-0 text-content-subtle"
           />
           <span>
             {state.latitude.toFixed(4)}, {state.longitude.toFixed(4)} ·{" "}

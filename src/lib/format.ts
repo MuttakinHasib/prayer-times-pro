@@ -11,15 +11,16 @@ export function clock(ms: number, tz: string): string {
   }).format(new Date(ms));
 }
 
-/** Long date in `tz`, e.g. "Thursday, 18 June 2026". */
+/** Long date in `tz`, day-first to match the reference app, e.g.
+ *  "Friday, 19 June, 2026". Field order is fixed (locale only supplies the
+ *  weekday/month names) so it doesn't flip to month-first under en-US. */
 export function longDate(ms: number, tz: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "long",
-    day: "numeric",
+  const d = new Date(ms);
+  const part = (opt: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat(undefined, { ...opt, timeZone: tz }).format(d);
+  return `${part({ weekday: "long" })}, ${part({ day: "numeric" })} ${part({
     month: "long",
-    year: "numeric",
-    timeZone: tz,
-  }).format(new Date(ms));
+  })}, ${part({ year: "numeric" })}`;
 }
 
 /** Umm al-Qura Hijri date, e.g. "3 Muharram 1448 AH", with a whole-day shift. */
