@@ -67,9 +67,9 @@ pub struct AppConfig {
 
 impl Default for AppConfig {
     fn default() -> Self {
-        // System timezone, falling back to UTC. Default location/method mirror the
-        // screenshots (Dhaka, Karachi + Hanafi) so the panel is meaningful before
-        // settings/location land in M3/M5.
+        // System timezone, falling back to UTC. A sensible default location/method
+        // (Dhaka, Karachi + Hanafi) so the panel is meaningful before settings and
+        // location land in M3/M5.
         let tz: Tz = iana_time_zone::get_timezone()
             .ok()
             .and_then(|id| id.parse().ok())
@@ -118,7 +118,7 @@ pub struct WaqtDto {
     pub is_obligatory: bool,
 }
 
-/// The live clock. Mirrors the Swift `PrayerClock`: today/tomorrow times,
+/// The live clock: today/tomorrow times,
 /// recompute on rollover, derived next/countdown.
 pub struct Clock {
     pub config: AppConfig,
