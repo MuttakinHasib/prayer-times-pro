@@ -49,3 +49,26 @@ export const onStateChanged = (cb: (s: PrayerState) => void): Promise<UnlistenFn
 /// Subscribe to Adhan start/stop (`true`/`false`). Returns an unlisten fn.
 export const onAdhanState = (cb: (playing: boolean) => void): Promise<UnlistenFn> =>
   listen<boolean>(ADHAN_EVENT, (e) => cb(e.payload));
+
+export const FOCUS_ENGAGE_EVENT = "focus://engage";
+export const FOCUS_DISMISS_EVENT = "focus://dismiss";
+
+export interface FocusCue {
+  prayer: string;
+  durationMinutes: number;
+  blur: "low" | "medium" | "high" | "opaque";
+  emergencyExit: boolean;
+}
+
+/** Engage Focus Mode; omit `prayer` to use the next prayer (settings preview). */
+export const engageFocus = (prayer?: string) =>
+  invoke<void>("engage_focus", { prayer: prayer ?? null });
+export const dismissFocus = () => invoke<void>("dismiss_focus");
+
+/// Subscribe to Focus Mode engage cues. Returns an unlisten fn.
+export const onFocusEngage = (cb: (cue: FocusCue) => void): Promise<UnlistenFn> =>
+  listen<FocusCue>(FOCUS_ENGAGE_EVENT, (e) => cb(e.payload));
+
+/// Subscribe to the dismiss broadcast so every overlay clears together.
+export const onFocusDismiss = (cb: () => void): Promise<UnlistenFn> =>
+  listen(FOCUS_DISMISS_EVENT, () => cb());

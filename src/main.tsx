@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Panel } from "./windows/panel/panel";
 import { Backdrop } from "./windows/backdrop/backdrop";
 import { Settings } from "./windows/settings/settings";
+import { Focus } from "./windows/focus/focus";
 import "@fontsource/newsreader/400.css";
 import "@fontsource/newsreader/500.css";
 import "@fontsource/newsreader/400-italic.css";
@@ -17,6 +18,7 @@ import "./index.css";
 // One Vite bundle, multiple Tauri webview windows routed by label. M2 ships the
 // panel + a click-catching backdrop; settings/focus/onboarding join later.
 const rootFor = (label: string) => {
+  if (label.startsWith("focus")) return <Focus />;
   switch (label) {
     case "backdrop":
       return <Backdrop />;

@@ -5,6 +5,7 @@
 
 mod audio;
 mod commands;
+mod focus;
 mod location;
 mod panel;
 mod scheduler;
@@ -50,6 +51,8 @@ pub fn run() {
             commands::check_for_updates,
             commands::stop_adhan,
             commands::detect_location,
+            commands::engage_focus,
+            commands::dismiss_focus,
         ])
         .setup(|app| {
             // Menu-bar agent: no Dock icon on macOS.
@@ -76,6 +79,7 @@ pub fn run() {
             panel::build(app.handle())?;
             panel::build_backdrop(app.handle())?;
             build_settings_window(app.handle())?;
+            focus::build_all(app.handle())?;
             tray::build(app.handle())?;
             tray::spawn_tick_loop(app.handle().clone());
             Ok(())
