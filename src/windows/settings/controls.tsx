@@ -2,13 +2,18 @@ import type { ReactNode } from "react";
 import { Minus, Plus } from "lucide-react";
 import { cn } from "../../lib/cn";
 
-/** A titled group of rows rendered as an inset card. */
+/** A titled group: a mono uppercase label over a bordered surface card whose
+ *  rows are separated by hairline dividers (macOS grouped-list style). */
 export const Section = ({ title, children }: { title?: string; children: ReactNode }) => (
-  <section className="mb-5">
+  <section className="mb-[22px]">
     {title && (
-      <h2 className="mb-1.5 px-1 text-[13px] font-semibold text-content">{title}</h2>
+      <h2 className="mb-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-content-subtle">
+        {title}
+      </h2>
     )}
-    <div className="divide-y divide-border overflow-hidden rounded-lg bg-white/5">{children}</div>
+    <div className="divide-y divide-divider rounded-xl border border-border bg-surface px-[18px]">
+      {children}
+    </div>
   </section>
 );
 
@@ -22,10 +27,10 @@ export const Row = ({
   sublabel?: ReactNode;
   children?: ReactNode;
 }) => (
-  <div className="flex min-h-[40px] items-center justify-between gap-3 px-3 py-2">
+  <div className="flex min-h-[40px] items-center justify-between gap-3 py-[14px]">
     <div className="min-w-0">
-      <div className="text-[13px] text-content">{label}</div>
-      {sublabel && <div className="mt-0.5 text-[11px] text-content-subtle">{sublabel}</div>}
+      <div className="text-[13.5px] text-content">{label}</div>
+      {sublabel && <div className="mt-0.5 text-[11.5px] text-content-subtle">{sublabel}</div>}
     </div>
     {children}
   </div>
@@ -33,7 +38,7 @@ export const Row = ({
 
 /** A small footnote under a section. */
 export const Note = ({ children }: { children: ReactNode }) => (
-  <p className="mb-5 mt-[-12px] px-1 text-[11px] leading-snug text-content-subtle">{children}</p>
+  <p className="mb-[22px] mt-[-12px] text-[11.5px] leading-snug text-content-subtle">{children}</p>
 );
 
 export const Toggle = ({
@@ -66,6 +71,8 @@ export const Toggle = ({
   </button>
 );
 
+/** A borderless dropdown: the value sits right-aligned in muted text with the
+ *  platform's native popup chevron — matches the grouped-list rows. */
 export const SelectField = <T extends string>({
   value,
   options,
@@ -78,7 +85,7 @@ export const SelectField = <T extends string>({
   <select
     value={value}
     onChange={(e) => onChange(e.target.value as T)}
-    className="max-w-[60%] rounded-md border border-white/10 bg-white/10 px-2 py-1 text-[12.5px] text-content"
+    className="max-w-[62%] cursor-pointer truncate bg-transparent text-right text-[12.5px] text-content-muted transition-colors hover:text-content"
   >
     {options.map((o) => (
       <option key={o.value} value={o.value}>
@@ -97,14 +104,14 @@ export const Segmented = <T extends string>({
   options: { value: T; label: string }[];
   onChange: (value: T) => void;
 }) => (
-  <div className="flex shrink-0 rounded-[7px] bg-black/25 p-[2px]">
+  <div className="flex shrink-0 rounded-[7px] bg-elevated p-[3px]">
     {options.map((o) => (
       <button
         key={o.value}
         type="button"
         onClick={() => onChange(o.value)}
-        className={cn("rounded-[5px] px-3 py-[3px] text-[12px] transition-colors", {
-          "bg-white/15 text-content shadow-[0_1px_2px_rgba(0,0,0,0.3)]": value === o.value,
+        className={cn("rounded-[5px] px-3 py-1 text-[12px] transition-colors", {
+          "bg-accent font-semibold text-accent-on": value === o.value,
           "text-content-muted hover:text-content": value !== o.value,
         })}
       >
@@ -135,18 +142,18 @@ export const Stepper = ({
       <span className="min-w-[64px] text-right text-[12.5px] tabular-nums text-content">
         {format ? format(value) : value}
       </span>
-      <div className="flex overflow-hidden rounded-md border border-white/10">
+      <div className="flex overflow-hidden rounded-md border border-border">
         <button
           type="button"
           onClick={() => onChange(clamp(value - step))}
-          className="px-1.5 py-1 text-content-muted hover:bg-white/10 hover:text-content"
+          className="px-1.5 py-1 text-content-muted hover:bg-surface-hover hover:text-content"
         >
           <Minus size={13} />
         </button>
         <button
           type="button"
           onClick={() => onChange(clamp(value + step))}
-          className="border-l border-white/10 px-1.5 py-1 text-content-muted hover:bg-white/10 hover:text-content"
+          className="border-l border-border px-1.5 py-1 text-content-muted hover:bg-surface-hover hover:text-content"
         >
           <Plus size={13} />
         </button>
