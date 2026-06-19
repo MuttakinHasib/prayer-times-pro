@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useCountdown } from "../../hooks/use-countdown";
 import { countdownLong, shortCountdown } from "../../lib/format";
 
@@ -13,11 +14,12 @@ interface Props {
  * A self-ticking countdown. It owns its own 1 Hz interval so only this node
  * re-renders each second — the surrounding panel stays static.
  */
-export const LiveCountdown = ({ targetMs, variant, className }: Props) => {
+export const LiveCountdown = memo(({ targetMs, variant, className }: Props) => {
   const seconds = useCountdown(targetMs);
   return (
     <span className={className}>
       {variant === "long" ? countdownLong(seconds) : shortCountdown(seconds)}
     </span>
   );
-};
+});
+LiveCountdown.displayName = "LiveCountdown";

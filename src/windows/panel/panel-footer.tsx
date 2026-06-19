@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import { checkForUpdates, hidePanel, openSettings, quitApp } from "../../lib/ipc";
 
 /** Settings / Check for Updates / Quit actions with mono shortcut hints. */
-export const PanelFooter = () => (
+export const PanelFooter = memo(() => (
   <div className="flex flex-col px-3 pb-3 pt-1.5">
     <FooterButton shortcut="⌘," onClick={() => openSettings().then(hidePanel)}>
       Settings
@@ -12,17 +12,16 @@ export const PanelFooter = () => (
       Quit
     </FooterButton>
   </div>
-);
+));
+PanelFooter.displayName = "PanelFooter";
 
-const FooterButton = ({
-  shortcut,
-  children,
-  onClick,
-}: {
+interface FooterButtonProps {
   shortcut?: string;
   children: ReactNode;
   onClick: () => void;
-}) => (
+}
+
+const FooterButton = ({ shortcut, children, onClick }: FooterButtonProps) => (
   <button
     type="button"
     onClick={onClick}
