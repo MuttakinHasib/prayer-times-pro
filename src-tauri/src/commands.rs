@@ -81,3 +81,10 @@ pub fn open_settings(app: AppHandle) {
 pub fn check_for_updates(app: AppHandle) {
     let _ = app.emit("prayer://check-updates-requested", ());
 }
+
+/// Stop any Adhan currently playing in-process.
+#[tauri::command]
+pub fn stop_adhan(app: AppHandle, audio: tauri::State<'_, crate::audio::Audio>) {
+    audio.stop();
+    let _ = app.emit(crate::scheduler::ADHAN_EVENT, false);
+}

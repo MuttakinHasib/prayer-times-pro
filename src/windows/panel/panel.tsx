@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { cn } from "../../lib/cn";
 import { usePanelAutoSize } from "../../hooks/use-panel-auto-size";
 import { initPrayerStore, usePrayerStore } from "../../stores/prayer.store";
+import { AdhanBar } from "./adhan-bar";
 import { PanelHeader } from "./panel-header";
 import { PrayerList } from "./prayer-list";
 import { PanelSummary } from "./panel-summary";
@@ -39,6 +40,7 @@ export const Panel = () => {
     <div ref={ref} className={SHELL}>
       <div className={BACKDROP} aria-hidden />
       <div className="relative">
+        <AdhanBar />
         <PanelHeader state={state} />
         <div className="h-px bg-divider" />
         <PrayerList state={state} />

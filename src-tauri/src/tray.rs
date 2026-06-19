@@ -72,6 +72,12 @@ pub fn spawn_tick_loop(app: AppHandle) {
                 let snapshot = clock.snapshot();
                 let _ = app.emit(STATE_EVENT, snapshot);
             }
+            let due = clock.due_notifications();
+            if !due.is_empty() {
+                let now_ms = clock.now_ms();
+                let audio = app.state::<crate::audio::Audio>();
+                crate::scheduler::fire(&app, audio.inner(), &due, now_ms);
+            }
         });
         // The main event loop is gone (app exiting) — stop, don't strand the thread.
         if scheduled.is_err() {

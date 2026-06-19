@@ -30,6 +30,7 @@ export interface PrayerState {
 }
 
 export const STATE_EVENT = "prayer://state-changed";
+export const ADHAN_EVENT = "prayer://adhan-state";
 
 export const getPrayerState = () => invoke<PrayerState>("get_prayer_state");
 export const hidePanel = () => invoke<void>("hide_panel");
@@ -39,7 +40,12 @@ export const reportContentSize = (width: number, height: number) =>
 export const quitApp = () => invoke<void>("quit_app");
 export const openSettings = () => invoke<void>("open_settings");
 export const checkForUpdates = () => invoke<void>("check_for_updates");
+export const stopAdhan = () => invoke<void>("stop_adhan");
 
 /// Subscribe to schedule-change pushes from Rust. Returns an unlisten fn.
 export const onStateChanged = (cb: (s: PrayerState) => void): Promise<UnlistenFn> =>
   listen<PrayerState>(STATE_EVENT, (e) => cb(e.payload));
+
+/// Subscribe to Adhan start/stop (`true`/`false`). Returns an unlisten fn.
+export const onAdhanState = (cb: (playing: boolean) => void): Promise<UnlistenFn> =>
+  listen<boolean>(ADHAN_EVENT, (e) => cb(e.payload));
