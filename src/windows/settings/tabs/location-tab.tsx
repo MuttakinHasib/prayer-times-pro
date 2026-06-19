@@ -52,7 +52,9 @@ export const LocationTab = ({ settings, update }: Props) => {
     try {
       await detect();
     } catch (e) {
-      setError(typeof e === "string" ? e : "Couldn't detect location.");
+      // Tauri rejects Result<_, String> with the bare string; also handle Error objects.
+      const message = typeof e === "string" ? e : e instanceof Error ? e.message : String(e);
+      setError(message || "Couldn't detect location.");
     } finally {
       setDetecting(false);
     }
