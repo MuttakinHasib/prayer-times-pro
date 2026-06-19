@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Check, Clock } from "lucide-react";
 import {
   dismissFocus,
   engageFocus,
@@ -96,54 +97,82 @@ export const Focus = () => {
       }}
     >
       <style>{`
-        @keyframes focus-breathe { from { transform: scale(1); opacity: .85 } to { transform: scale(1.06); opacity: 1 } }
-        .focus-breathe { animation: focus-breathe 4s cubic-bezier(.32,.72,0,1) infinite alternate; }
+        @keyframes focus-breathe { from { transform: scale(1); opacity: .8 } to { transform: scale(1.05); opacity: 1 } }
+        @keyframes focus-glow { from { transform: translate(-50%,-50%) scale(.95); opacity: .55 } to { transform: translate(-50%,-50%) scale(1.08); opacity: .9 } }
+        @keyframes focus-rise { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+        .focus-breathe { animation: focus-breathe 5s cubic-bezier(.4,0,.6,1) infinite alternate; }
+        .focus-glow { animation: focus-glow 5s cubic-bezier(.4,0,.6,1) infinite alternate; }
         .focus-overlay { animation: focus-in .6s ease both; }
+        .focus-rise { animation: focus-rise .7s cubic-bezier(.32,.72,0,1) both; }
         @keyframes focus-in { from { opacity: 0 } to { opacity: 1 } }
       `}</style>
+
+      {/* Soft gold radial glow centered behind the ring. */}
+      <div
+        className="focus-glow pointer-events-none absolute left-1/2 top-[40%] h-[560px] w-[560px] rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(200,169,104,.12), transparent 68%)" }}
+      />
 
       <div className="absolute right-8 top-7 font-mono text-[11px] tracking-[0.16em] text-content-subtle">
         {cue.emergencyExit ? "PRESS ESC ANYTIME TO DISMISS" : `FOCUS · ${cue.prayer.toUpperCase()}`}
       </div>
 
-      <div className="focus-breathe relative mb-12 flex h-[200px] w-[200px] items-center justify-center rounded-full border border-accent-ring">
-        <div className="absolute inset-6 rounded-full border border-accent-ring/60" />
-        <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true" style={{ filter: "drop-shadow(0 0 28px rgba(200,169,104,.55))" }}>
+      <div className="focus-breathe relative mb-12 flex h-[208px] w-[208px] items-center justify-center rounded-full border border-accent-ring/70">
+        <div className="absolute inset-5 rounded-full border border-accent-ring/40" />
+        <div className="absolute inset-10 rounded-full bg-[radial-gradient(circle,rgba(200,169,104,.10),transparent_70%)]" />
+        <svg
+          width="46"
+          height="46"
+          viewBox="0 0 100 100"
+          aria-hidden="true"
+          style={{ filter: "drop-shadow(0 0 34px rgba(200,169,104,.6))" }}
+        >
           <defs>
+            <radialGradient id="focus-fill" cx="38%" cy="32%" r="75%">
+              <stop offset="0" stopColor="#ecd49a" />
+              <stop offset="1" stopColor="#c8a968" />
+            </radialGradient>
             <mask id="focus-crescent">
               <rect width="100" height="100" fill="#000" />
               <circle cx="48" cy="50" r="42" fill="#fff" />
               <circle cx="63" cy="40" r="35" fill="#000" />
             </mask>
           </defs>
-          <rect width="100" height="100" fill="var(--c-accent)" mask="url(#focus-crescent)" />
+          <rect width="100" height="100" fill="url(#focus-fill)" mask="url(#focus-crescent)" />
         </svg>
       </div>
 
-      <div className="font-display text-[18px] italic text-content-muted">It's time for</div>
-      <div className="font-display text-[64px] leading-none">{cue.prayer}</div>
-      <div className="mt-5 text-[15px] text-accent">
-        Your screen will gently clear in {mmss(secondsLeft)}
+      <div className="focus-rise flex flex-col items-center" style={{ animationDelay: "120ms" }}>
+        <div className="font-display text-[18px] italic text-content-muted">It's time for</div>
+        <div className="font-display text-[64px] leading-none tracking-[-0.01em]">{cue.prayer}</div>
+        <div className="mt-5 text-[15px] text-accent">
+          Your screen will gently clear in <span className="tabular-nums">{mmss(secondsLeft)}</span>
+        </div>
       </div>
 
-      <div className="mt-12 flex flex-col items-center gap-3">
+      <div
+        className="focus-rise mt-12 flex flex-col items-center gap-2.5"
+        style={{ animationDelay: "240ms" }}
+      >
         <button
           type="button"
           onClick={dismiss}
-          className="rounded-[11px] bg-accent px-8 py-3 text-[15px] font-semibold text-accent-on transition-colors hover:bg-accent-emphasis"
+          className="flex w-[220px] items-center justify-center gap-2 rounded-[13px] bg-accent py-3 text-[15px] font-semibold text-accent-on shadow-[0_10px_34px_-8px_rgba(200,169,104,.55)] transition-all hover:bg-accent-emphasis hover:shadow-[0_14px_40px_-8px_rgba(200,169,104,.7)] active:scale-[0.98]"
         >
+          <Check size={17} strokeWidth={2.75} />
           I've prayed
         </button>
         <button
           type="button"
           onClick={onSnooze}
-          className="rounded-[11px] border border-border px-6 py-2 text-[13.5px] text-content-muted transition-colors hover:text-content"
+          className="flex w-[220px] items-center justify-center gap-2 rounded-[13px] border border-white/12 py-2.5 text-[13.5px] text-content-muted transition-all hover:border-white/25 hover:bg-white/[0.04] hover:text-content active:scale-[0.98]"
         >
+          <Clock size={15} />
           Snooze 10 min
         </button>
       </div>
 
-      <div className="absolute bottom-7 max-w-[520px] px-6 text-center text-[12px] text-content-subtle/70">
+      <div className="absolute bottom-7 max-w-[520px] px-6 text-center text-[11.5px] text-content-subtle/70">
         A discipline aid, not a lock — Force Quit always works, and Focus won't trap you.
       </div>
     </div>
