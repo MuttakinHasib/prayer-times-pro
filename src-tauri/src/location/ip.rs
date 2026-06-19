@@ -1,12 +1,14 @@
-//! Location detection for the "Detect" action. IP-based (cross-platform) — it
-//! resolves coordinates, the ISO country code, and the IANA timezone from the
-//! caller's IP. Precise macOS CoreLocation is a planned enhancement.
+//! IP geolocation via ipwho.is (rustls, no key). Supplies coordinates, ISO
+//! country code, and IANA timezone. `ipapi.co` sits behind a Cloudflare
+//! bot-challenge, so it's unusable for a headless request.
 
 use std::sync::OnceLock;
 use std::time::Duration;
 
 use prayer_core::Coordinates;
 use serde::Deserialize;
+
+use super::Detected;
 
 /// One shared client with a bounded timeout, so a slow network can't hang the UI.
 fn client() -> &'static reqwest::Client {
@@ -18,13 +20,6 @@ fn client() -> &'static reqwest::Client {
             .build()
             .unwrap_or_default()
     })
-}
-
-/// What a detection yields: coordinates plus hints used to pick a method/timezone.
-pub struct Detected {
-    pub coords: Coordinates,
-    pub country_code: Option<String>,
-    pub tz: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -44,8 +39,7 @@ struct IpWho {
     timezone: Option<Timezone>,
 }
 
-/// Resolve the current location from the public IP. Errors are returned as
-/// human-readable strings for the frontend to surface.
+/// Resolve the location from the public IP. Errors are human-readable strings.
 pub async fn detect() -> Result<Detected, String> {
     let resp = client()
         .get("https://ipwho.is/")
