@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@fontsource-variable/newsreader": "^5.2.10",
     "@fontsource/amiri": "^5.2.8",
     "@fontsource/newsreader": "^5.2.10",
     "@fontsource/noto-sans-bengali": "^5.2.11",
