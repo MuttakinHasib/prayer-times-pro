@@ -5,10 +5,13 @@
 
 mod commands;
 mod panel;
+mod settings_io;
 mod state;
 mod tray;
 
-use state::{AppConfig, Clock, SharedClock};
+use prayer_core::AppSettings;
+use state::{Clock, SharedClock};
+use tauri::Manager;
 
 pub(crate) const PANEL_LABEL: &str = "panel";
 pub(crate) const BACKDROP_LABEL: &str = "backdrop";
@@ -27,13 +30,15 @@ pub fn run() {
     }
 
     builder
-        .manage(SharedClock::new(Clock::new(AppConfig::default())))
+        .manage(SharedClock::new(Clock::new(AppSettings::default())))
         .invoke_handler(tauri::generate_handler![
             commands::get_prayer_state,
             commands::hide_panel,
             commands::dismiss_panel,
             commands::quit_app,
             commands::report_content_size,
+            commands::get_settings,
+            commands::apply_settings,
             commands::open_settings,
             commands::check_for_updates,
         ])
@@ -41,6 +46,13 @@ pub fn run() {
             // Menu-bar agent: no Dock icon on macOS.
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+            // Load persisted settings into the live clock.
+            let settings = settings_io::load(app.handle());
+            app.state::<SharedClock>()
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .set_settings(settings);
 
             panel::build(app.handle())?;
             panel::build_backdrop(app.handle())?;
