@@ -100,6 +100,7 @@ export const NotificationsTab = ({ settings, update }: Props) => {
                 <Labeled label="Adhan">
                   <Toggle
                     checked={obligatory && c.playFullAdhan}
+                    disabled={!obligatory}
                     onChange={(playFullAdhan) => obligatory && setCfg(p, { playFullAdhan })}
                   />
                 </Labeled>

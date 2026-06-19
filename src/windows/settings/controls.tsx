@@ -38,25 +38,29 @@ export const Note = ({ children }: { children: ReactNode }) => (
 
 export const Toggle = ({
   checked,
+  disabled = false,
   onChange,
 }: {
   checked: boolean;
+  disabled?: boolean;
   onChange: (value: boolean) => void;
 }) => (
   <button
     type="button"
     role="switch"
     aria-checked={checked}
+    disabled={disabled}
     onClick={() => onChange(!checked)}
-    className={cn(
-      "relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors",
-      checked ? "bg-accent" : "bg-white/15",
-    )}
+    className={cn("relative h-[24px] w-[40px] shrink-0 rounded-full transition-colors", {
+      "bg-accent": checked,
+      "bg-white/20": !checked,
+      "cursor-default opacity-40": disabled,
+    })}
   >
     <span
       className={cn(
-        "absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white shadow transition-transform",
-        checked ? "translate-x-[18px]" : "translate-x-[2px]",
+        "absolute top-[2px] left-[2px] h-[20px] w-[20px] rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.35)] transition-transform",
+        { "translate-x-[16px]": checked },
       )}
     />
   </button>
@@ -93,16 +97,16 @@ export const Segmented = <T extends string>({
   options: { value: T; label: string }[];
   onChange: (value: T) => void;
 }) => (
-  <div className="flex shrink-0 rounded-md bg-white/10 p-0.5">
+  <div className="flex shrink-0 rounded-[7px] bg-black/25 p-[2px]">
     {options.map((o) => (
       <button
         key={o.value}
         type="button"
         onClick={() => onChange(o.value)}
-        className={cn(
-          "rounded px-2.5 py-1 text-[12px] transition-colors",
-          value === o.value ? "bg-accent text-white" : "text-content-muted hover:text-content",
-        )}
+        className={cn("rounded-[5px] px-3 py-[3px] text-[12px] transition-colors", {
+          "bg-white/15 text-content shadow-[0_1px_2px_rgba(0,0,0,0.3)]": value === o.value,
+          "text-content-muted hover:text-content": value !== o.value,
+        })}
       >
         {o.label}
       </button>
