@@ -37,7 +37,7 @@ export const Settings = () => {
   const active = TABS.find((t) => t.id === tabId) ?? TABS[0];
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-bg text-content">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-bg text-content">
       <nav className="flex gap-1 border-b border-border px-3 py-2">
         {TABS.map(({ id, label, Icon }) => (
           <button
@@ -57,7 +57,7 @@ export const Settings = () => {
         ))}
       </nav>
 
-      <div className="flex-1 overflow-y-auto px-[30px] py-6">
+      <div className="flex-1 overflow-y-auto px-[30px] py-6 [scrollbar-gutter:stable]">
         {settings && <active.Body settings={settings} update={update} />}
       </div>
     </div>
