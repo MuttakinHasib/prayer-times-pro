@@ -12,20 +12,20 @@ use crate::panel;
 use crate::state::SharedClock;
 use crate::{STATE_EVENT, TRAY_ID};
 
-/// Build the tray icon. The icon carries the mosque glyph; `set_title` shows the
+/// Build the tray icon. The icon carries the mihrab glyph; `set_title` shows the
 /// live countdown text (macOS). Left-click toggles the panel.
 pub fn build(app: &AppHandle) -> tauri::Result<()> {
     let mut builder = TrayIconBuilder::with_id(TRAY_ID)
         .title("Prayer Times")
         .tooltip("Prayer Times");
 
-    // Mosque glyph embedded at compile time and rendered as a template so macOS
+    // Mihrab glyph embedded at compile time and rendered as a template so macOS
     // tints it for the light/dark menu bar. Falls back to the default icon if the
     // embedded PNG ever fails to decode.
-    match tauri::image::Image::from_bytes(include_bytes!("../icons/tray-mosque@2x.png")) {
+    match tauri::image::Image::from_bytes(include_bytes!("../icons/tray-mihrab@2x.png")) {
         Ok(icon) => builder = builder.icon(icon).icon_as_template(true),
         Err(err) => {
-            eprintln!("tray: mosque icon decode failed ({err}); using default icon");
+            eprintln!("tray: mihrab icon decode failed ({err}); using default icon");
             if let Some(icon) = app.default_window_icon().cloned() {
                 builder = builder.icon(icon);
             }

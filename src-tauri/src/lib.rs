@@ -18,7 +18,7 @@ pub(crate) const BACKDROP_LABEL: &str = "backdrop";
 pub(crate) const SETTINGS_LABEL: &str = "settings";
 pub(crate) const TRAY_ID: &str = "tray";
 pub(crate) const STATE_EVENT: &str = "prayer://state-changed";
-pub(crate) const PANEL_W: f64 = 312.0;
+pub(crate) const PANEL_W: f64 = 360.0;
 pub(crate) const PANEL_H: f64 = 482.0;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

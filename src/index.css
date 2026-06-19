@@ -1,24 +1,146 @@
 @import "tailwindcss";
 
-/* Design tokens (Tailwind v4 `@theme`) — semantic, role-based names.
-   - accent:   brand green, the primary highlight (next prayer, actions)
-   - surface:  dark translucent glass backgrounds
-   - content:  text/foreground hierarchy (default → muted → subtle)
-   - border:   hairline separators and outlines */
-@theme {
-  --color-accent: #2e953f;
-  --color-accent-emphasis: #36c14e;
+/* ─────────────────────────────────────────────────────────────────────────
+   Design tokens — three tiers.
+   1. PRIMITIVES   raw palette values, theme-agnostic (--p-*)
+   2. SEMANTIC     role-based, swapped per theme (--c-*), the only tier the UI reads
+   3. COMPONENT    Tailwind utilities, mapped from semantic via @theme inline
+   No component hardcodes a primitive; the dark theme is the default and the
+   light theme is derived from the same semantic roles.
+   ───────────────────────────────────────────────────────────────────────── */
 
-  --color-surface: rgba(28, 28, 30, 0.82);
-  --color-surface-hover: rgba(255, 255, 255, 0.08);
+:root {
+  /* ── 1. Primitives ── */
+  --p-obsidian-950: #0b0c0e;
+  --p-obsidian-900: #141518;
+  --p-obsidian-800: #1c1e22;
+  --p-obsidian-700: #26282e;
 
-  --color-content: #f2f2f7;
-  --color-content-muted: rgba(235, 235, 245, 0.62);
-  --color-content-subtle: rgba(235, 235, 245, 0.4);
+  --p-gold-300: #ecd49a;
+  --p-gold-400: #d9bc7e;
+  --p-gold-500: #c8a968;
+  --p-gold-600: #b4924f;
+  --p-gold-700: #a8893f;
+  --p-gold-800: #a07f3c;
+  --p-gold-900: #8a6c2f;
+  --p-gold-ink: #1a160c;
 
-  --color-border: rgba(255, 255, 255, 0.1);
+  --p-paper-50: #ffffff;
+  --p-paper-100: #fbfaf7;
+  --p-paper-200: #f4f3f0;
+  --p-paper-300: #e6e3dc;
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --p-ink-900: #1c1f24;
+  --p-ink-600: #5d5a52;
+  --p-ink-400: #96918a;
+
+  --p-mist-50: #f2f0ec;
+  --p-mist-400: #9a9892;
+  --p-mist-600: #66645f;
+
+  --p-success-dark: #6fae8e;
+  --p-success-light: #3f8c5f;
+  --p-warning-dark: #d6a35c;
+  --p-warning-light: #b9842f;
+  --p-error-dark: #c97a6d;
+  --p-error-light: #b4564a;
+
+  /* ── 2. Semantic — dark (Midnight Sanctuary, default) ── */
+  --c-bg: var(--p-obsidian-950);
+  --c-surface: var(--p-obsidian-900);
+  --c-surface-hover: rgba(255, 255, 255, 0.06);
+  --c-elevated: var(--p-obsidian-800);
+  --c-border: var(--p-obsidian-700);
+  --c-divider: rgba(255, 255, 255, 0.06);
+
+  --c-accent: var(--p-gold-500);
+  --c-accent-emphasis: var(--p-gold-400);
+  --c-accent-active: var(--p-gold-600);
+  --c-accent-on: var(--p-gold-ink);
+  --c-accent-soft: rgba(200, 169, 104, 0.12);
+  --c-accent-ring: rgba(200, 169, 104, 0.25);
+
+  --c-content: var(--p-mist-50);
+  --c-content-muted: var(--p-mist-400);
+  --c-content-subtle: var(--p-mist-600);
+
+  --c-success: var(--p-success-dark);
+  --c-warning: var(--p-warning-dark);
+  --c-error: var(--p-error-dark);
+
+  /* Translucent popover material (vibrancy fallback). */
+  --c-popover: rgba(18, 19, 22, 0.86);
+
+  /* ── Typography families ── */
+  --font-display: "Newsreader", "Iowan Old Style", Palatino, Georgia, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+    system-ui, "Noto Sans Bengali", "Amiri", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", "JetBrains Mono",
+    monospace;
+}
+
+/* ── 2. Semantic — light (Dawn Serenity), derived ── */
+[data-theme="light"] {
+  --c-bg: var(--p-paper-200);
+  --c-surface: var(--p-paper-50);
+  --c-surface-hover: rgba(0, 0, 0, 0.04);
+  --c-elevated: var(--p-paper-100);
+  --c-border: var(--p-paper-300);
+  --c-divider: rgba(0, 0, 0, 0.06);
+
+  --c-accent: var(--p-gold-800);
+  --c-accent-emphasis: var(--p-gold-900);
+  --c-accent-active: var(--p-gold-900);
+  --c-accent-on: var(--p-paper-50);
+  --c-accent-soft: rgba(160, 127, 60, 0.12);
+  --c-accent-ring: rgba(160, 127, 60, 0.28);
+
+  --c-content: var(--p-ink-900);
+  --c-content-muted: var(--p-ink-600);
+  --c-content-subtle: var(--p-ink-400);
+
+  --c-success: var(--p-success-light);
+  --c-warning: var(--p-warning-light);
+  --c-error: var(--p-error-light);
+
+  --c-popover: rgba(255, 255, 255, 0.88);
+}
+
+/* ── 3. Component — expose semantic tokens as Tailwind utilities ──
+   `inline` makes utilities reference the live CSS var, so a theme swap on
+   <html data-theme> re-themes every utility at runtime. */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-hover: var(--c-surface-hover);
+  --color-elevated: var(--c-elevated);
+  --color-border: var(--c-border);
+  --color-divider: var(--c-divider);
+  --color-popover: var(--c-popover);
+
+  --color-accent: var(--c-accent);
+  --color-accent-emphasis: var(--c-accent-emphasis);
+  --color-accent-active: var(--c-accent-active);
+  --color-accent-on: var(--c-accent-on);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-accent-ring: var(--c-accent-ring);
+
+  --color-content: var(--c-content);
+  --color-content-muted: var(--c-content-muted);
+  --color-content-subtle: var(--c-content-subtle);
+
+  --color-success: var(--c-success);
+  --color-warning: var(--c-warning);
+  --color-error: var(--c-error);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-control: 6px;
+  --radius-button: 10px;
+  --radius-card: 14px;
+  --radius-panel: 16px;
 }
 
 @layer base {
@@ -28,7 +150,7 @@
     background: transparent;
     overflow: hidden;
     font-family: var(--font-sans);
-    color: var(--color-content);
+    color: var(--c-content);
     -webkit-user-select: none;
     user-select: none;
     cursor: default;
@@ -38,5 +160,14 @@
   *:focus,
   *:focus-visible {
     outline: none !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
   }
 }
