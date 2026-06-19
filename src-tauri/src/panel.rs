@@ -116,10 +116,15 @@ mod macos {
             .build()?;
 
         // No show/hide animation — appear/vanish instantly like a native popover.
-        use tauri_nspanel::objc2_app_kit::NSWindowAnimationBehavior;
-        panel
-            .as_panel()
-            .setAnimationBehavior(NSWindowAnimationBehavior::None);
+        use tauri_nspanel::objc2_app_kit::{NSColor, NSWindowAnimationBehavior};
+        let ns_panel = panel.as_panel();
+        ns_panel.setAnimationBehavior(NSWindowAnimationBehavior::None);
+        // The NSPanel backing defaults to opaque; without this the square window
+        // corners paint the panel's background outside the CSS 16px radius. A clear,
+        // non-opaque backing lets the rounded webview show through (and macOS draws
+        // the drop shadow around the rounded pixels, not the square frame).
+        ns_panel.setOpaque(false);
+        ns_panel.setBackgroundColor(Some(&NSColor::clearColor()));
 
         // Lost key focus (backdrop/another app took it) → dismiss everything.
         let handle = app.clone();
