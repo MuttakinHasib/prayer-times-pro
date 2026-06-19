@@ -7,6 +7,7 @@ import {
   onFocusEngage,
   type FocusCue,
 } from "../../lib/ipc";
+import { randomScripture, type Scripture } from "./quotes";
 
 const SNOOZE_MS = 10 * 60 * 1000;
 
@@ -29,6 +30,7 @@ const mmss = (total: number) => {
 export const Focus = () => {
   const [cue, setCue] = useState<FocusCue | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
+  const [quote, setQuote] = useState<Scripture>(randomScripture);
   const tick = useRef<ReturnType<typeof setInterval>>(undefined);
   const snooze = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -46,6 +48,7 @@ export const Focus = () => {
       clearTimeout(snooze.current);
       clearInterval(tick.current);
       setCue(next);
+      setQuote(randomScripture());
       setSecondsLeft(next.durationMinutes * 60);
       tick.current = setInterval(() => {
         setSecondsLeft((s) => {
@@ -150,9 +153,19 @@ export const Focus = () => {
         </div>
       </div>
 
+      <figure
+        className="focus-rise mt-10 max-w-[660px] px-8 text-center"
+        style={{ animationDelay: "200ms" }}
+      >
+        <blockquote className="font-display text-[24px] italic leading-snug text-content/90">
+          “{quote.text}”
+        </blockquote>
+        <figcaption className="mt-3.5 text-[14px] text-accent">{quote.source}</figcaption>
+      </figure>
+
       <div
-        className="focus-rise mt-12 flex items-center justify-center gap-3"
-        style={{ animationDelay: "240ms" }}
+        className="focus-rise mt-11 flex items-center justify-center gap-3"
+        style={{ animationDelay: "300ms" }}
       >
         <button
           type="button"
