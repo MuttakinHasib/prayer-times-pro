@@ -15,7 +15,10 @@ export const Panel = () => {
   const ref = usePanelAutoSize();
   const state = usePrayerStore((s) => s.state);
 
-  useEffect(() => initPrayerStore(), []);
+  useEffect(() => {
+    // initPrayerStore returns its unsubscribe fn → becomes the effect cleanup.
+    return initPrayerStore();
+  }, []);
 
   if (!state) return <div ref={ref} className={cn(SHELL, "min-h-[200px]")} />;
 
