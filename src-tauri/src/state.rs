@@ -7,10 +7,16 @@ use chrono::{DateTime, Duration, NaiveDate, Timelike, Utc};
 use chrono_tz::Tz;
 use prayer_core::{
     calculate, AppSettings, CalculationMethodAdapter, CalculationMode, Coordinates, CurrentWaqt,
-    HighLatitudeRule, MenuBarCountdownMode, MenuBarStyle, MethodRegistry, MwlAdapter, Prayer,
-    PrayerTimes,
+    HighLatitudeRule, MenuBarCountdownMode, MenuBarStyle, MethodRegistry, MwlAdapter,
+    NotificationSound, Prayer, PrayerTimes,
 };
 use serde::Serialize;
+
+use crate::scheduler::NotifEvent;
+
+/// Banners older than this (e.g. after a long sleep) are dropped rather than
+/// fired as a backlog when the tick loop catches up.
+const NOTIFY_CATCHUP_MS: i64 = 120_000;
 
 /// Fallback location until the user sets one (Location & Time tab) / auto-detect (M5).
 const DEFAULT_COORDINATES: Coordinates = Coordinates {
@@ -106,6 +112,9 @@ pub struct Clock {
     now: DateTime<Tz>,
     last_day: NaiveDate,
     emitted: Option<(NaiveDate, &'static str)>,
+    /// Instant up to which notifications have been considered; `None` until the
+    /// first tick so startup never fires a backlog.
+    last_notified: Option<DateTime<Tz>>,
 }
 
 impl Clock {
@@ -121,6 +130,7 @@ impl Clock {
             tomorrow,
             now,
             emitted: None,
+            last_notified: None,
         }
     }
 
@@ -134,6 +144,9 @@ impl Clock {
         self.now = Utc::now().with_timezone(&resolved_tz(&self.settings));
         self.recompute();
         self.emitted = None; // force the next emit after a settings change
+        // Don't fire a backlog of events for times that are already in the past
+        // relative to the new schedule.
+        self.last_notified = Some(self.now);
     }
 
     fn recompute(&mut self) {
@@ -256,6 +269,73 @@ impl Clock {
             times,
         }
     }
+
+    pub fn now_ms(&self) -> i64 {
+        self.now.timestamp_millis()
+    }
+
+    /// Notification/Adhan events that came due since the previous tick. Advances
+    /// the watermark every call. Empty on the first tick (no startup backlog),
+    /// when the master switch is off, or for events older than the catch-up window.
+    pub fn due_notifications(&mut self) -> Vec<NotifEvent> {
+        let now = self.now;
+        let prev = self.last_notified.replace(now);
+        let (Some(prev), true) = (prev, self.settings.master_notifications_enabled) else {
+            return Vec::new();
+        };
+        let (prev_ms, now_ms) = (prev.timestamp_millis(), now.timestamp_millis());
+
+        self.today
+            .ordered()
+            .into_iter()
+            .chain(self.tomorrow.ordered())
+            .flat_map(|(prayer, time)| build_events(&self.settings, prayer, time))
+            .filter(|e| {
+                e.fire_ms > prev_ms && e.fire_ms <= now_ms && now_ms - e.fire_ms <= NOTIFY_CATCHUP_MS
+            })
+            .collect()
+    }
+}
+
+/// The reminder / athan / iqamah events for one prayer, honoring its resolved
+/// notification config. Returns nothing when the prayer is muted.
+fn build_events(settings: &AppSettings, prayer: Prayer, time: DateTime<Tz>) -> Vec<NotifEvent> {
+    let cfg = settings.resolved_notification(prayer);
+    if !cfg.notify {
+        return Vec::new();
+    }
+    let name = prayer_name(prayer);
+    let at = time.timestamp_millis();
+    let madinah = cfg.sound == NotificationSound::AdhanMadinah;
+    let mut events = vec![NotifEvent {
+        fire_ms: at,
+        title: name.to_string(),
+        body: format!("It's time for {name}."),
+        play_adhan: cfg.play_full_adhan,
+        madinah,
+    }];
+
+    if cfg.early_reminder_enabled {
+        let lead = cfg.early_lead_minutes;
+        events.push(NotifEvent {
+            fire_ms: at - lead as i64 * 60_000,
+            title: format!("{name} in {lead} min"),
+            body: format!("{name} begins soon."),
+            play_adhan: false,
+            madinah,
+        });
+    }
+
+    if cfg.iqamah_offset_minutes > 0 {
+        events.push(NotifEvent {
+            fire_ms: at + cfg.iqamah_offset_minutes as i64 * 60_000,
+            title: format!("Iqamah · {name}"),
+            body: format!("Jamaat for {name}."),
+            play_adhan: false,
+            madinah,
+        });
+    }
+    events
 }
 
 fn resolved_coordinates(settings: &AppSettings) -> Coordinates {

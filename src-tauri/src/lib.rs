@@ -3,8 +3,10 @@
 //! focused modules: [`commands`] (IPC), [`panel`] (the popover + backdrop),
 //! [`tray`] (status item + tick), and [`state`] (the prayer clock).
 
+mod audio;
 mod commands;
 mod panel;
+mod scheduler;
 mod settings_io;
 mod state;
 mod tray;
@@ -23,7 +25,9 @@ pub(crate) const PANEL_H: f64 = 482.0;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default().plugin(tauri_plugin_opener::init());
+    let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init());
 
     #[cfg(target_os = "macos")]
     {
@@ -32,6 +36,7 @@ pub fn run() {
 
     builder
         .manage(SharedClock::new(Clock::new(AppSettings::default())))
+        .manage(audio::Audio::spawn())
         .invoke_handler(tauri::generate_handler![
             commands::get_prayer_state,
             commands::hide_panel,
@@ -42,11 +47,22 @@ pub fn run() {
             commands::apply_settings,
             commands::open_settings,
             commands::check_for_updates,
+            commands::stop_adhan,
         ])
         .setup(|app| {
             // Menu-bar agent: no Dock icon on macOS.
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+            // Ask once for notification permission (no-op if already decided).
+            use tauri_plugin_notification::{NotificationExt, PermissionState};
+            match app.notification().permission_state() {
+                Ok(PermissionState::Granted) => {}
+                Ok(_) => {
+                    let _ = app.notification().request_permission();
+                }
+                Err(err) => eprintln!("notification: permission check failed: {err}"),
+            }
 
             // Load persisted settings into the live clock.
             let settings = settings_io::load(app.handle());
