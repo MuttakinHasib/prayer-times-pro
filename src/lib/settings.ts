@@ -102,3 +102,5 @@ export const METHODS: { id: string; name: string }[] = [
 export const getSettings = () => invoke<AppSettings>("get_settings");
 export const applySettings = (settings: AppSettings) =>
   invoke<void>("apply_settings", { settings });
+/** Detect location from IP; returns the updated settings (already persisted/applied). */
+export const detectLocation = () => invoke<AppSettings>("detect_location");

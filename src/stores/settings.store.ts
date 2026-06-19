@@ -1,11 +1,13 @@
 import { create } from "zustand";
-import { applySettings, getSettings, type AppSettings } from "../lib/settings";
+import { applySettings, detectLocation, getSettings, type AppSettings } from "../lib/settings";
 
 interface SettingsStore {
   settings: AppSettings | null;
   hydrate: () => Promise<void>;
   /** Optimistically patch settings and persist via the Rust `apply_settings` command. */
   update: (patch: Partial<AppSettings>) => void;
+  /** Detect location from IP; Rust persists + applies and returns the new settings. */
+  detect: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
@@ -28,5 +30,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       console.error("apply_settings failed", err);
       set({ settings: current });
     });
+  },
+  detect: async () => {
+    // Rust persists + applies; just reflect the returned settings. Errors bubble
+    // so the caller can surface them.
+    set({ settings: await detectLocation() });
   },
 }));

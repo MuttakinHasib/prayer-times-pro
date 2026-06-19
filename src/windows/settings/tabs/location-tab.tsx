@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { AppSettings, Coordinates, LocationMode } from "../../../lib/settings";
+import { useSettingsStore } from "../../../stores/settings.store";
 import { Note, Row, Section, Segmented, Stepper } from "../controls";
 
 interface Props {
@@ -37,9 +39,24 @@ const Num = ({
 );
 
 export const LocationTab = ({ settings, update }: Props) => {
+  const detect = useSettingsStore((s) => s.detect);
+  const [detecting, setDetecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const coords = settings.manualCoordinates ?? DEFAULT_COORDS;
   const setCoords = (patch: Partial<Coordinates>) =>
     update({ manualCoordinates: { ...coords, ...patch } });
+
+  const runDetect = async () => {
+    setError(null);
+    setDetecting(true);
+    try {
+      await detect();
+    } catch (e) {
+      setError(typeof e === "string" ? e : "Couldn't detect location.");
+    } finally {
+      setDetecting(false);
+    }
+  };
 
   return (
     <>
@@ -60,9 +77,27 @@ export const LocationTab = ({ settings, update }: Props) => {
         <Row label="Elevation (m)">
           <Num value={coords.elevation} step={1} onChange={(elevation) => setCoords({ elevation })} />
         </Row>
+        {settings.locationMode === "automatic" && (
+          <Row label="Detect" sublabel="Use your IP to fill coordinates and timezone.">
+            <button
+              type="button"
+              onClick={runDetect}
+              disabled={detecting}
+              className="rounded-md bg-accent px-3 py-1 text-[12.5px] font-medium text-accent-on transition-colors hover:bg-accent-emphasis disabled:opacity-50"
+            >
+              {detecting ? "Detecting…" : "Detect location"}
+            </button>
+          </Row>
+        )}
       </Section>
       {settings.locationMode === "automatic" && (
-        <Note>Auto-detect arrives in a later milestone; enter coordinates manually for now.</Note>
+        <Note>
+          {error
+            ? error
+            : settings.autoDetectMethod
+              ? "Detect fills coordinates, timezone, and a regional calculation method."
+              : "Detect fills coordinates and timezone. Enable method auto-detect in Calculation."}
+        </Note>
       )}
 
       <Section title="Timezone">

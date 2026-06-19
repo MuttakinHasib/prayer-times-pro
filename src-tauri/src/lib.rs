@@ -5,6 +5,7 @@
 
 mod audio;
 mod commands;
+mod location;
 mod panel;
 mod scheduler;
 mod settings_io;
@@ -48,6 +49,7 @@ pub fn run() {
             commands::open_settings,
             commands::check_for_updates,
             commands::stop_adhan,
+            commands::detect_location,
         ])
         .setup(|app| {
             // Menu-bar agent: no Dock icon on macOS.
