@@ -1,37 +1,38 @@
 import type { ReactNode } from "react";
 import { checkForUpdates, hidePanel, openSettings, quitApp } from "../../lib/ipc";
-import { GearIcon, PowerIcon, RefreshIcon } from "../../components/icons";
 
-/** Settings / Check for Updates / Quit actions. */
+/** Settings / Check for Updates / Quit actions with mono shortcut hints. */
 export const PanelFooter = () => (
-  <div className="flex flex-col p-1.5">
-    <FooterButton icon={<GearIcon size={15} />} onClick={() => openSettings().then(hidePanel)}>
-      Settings…
+  <div className="flex flex-col px-3 pb-3 pt-1.5">
+    <FooterButton shortcut="⌘," onClick={() => openSettings().then(hidePanel)}>
+      Settings
     </FooterButton>
-    <FooterButton icon={<RefreshIcon size={15} />} onClick={() => checkForUpdates()}>
-      Check for Updates…
-    </FooterButton>
-    <FooterButton icon={<PowerIcon size={15} />} onClick={() => quitApp()}>
+    <FooterButton onClick={() => checkForUpdates()}>Check for Updates…</FooterButton>
+    <FooterButton shortcut="⌘Q" onClick={() => quitApp()}>
       Quit
     </FooterButton>
   </div>
 );
 
 const FooterButton = ({
-  icon,
+  shortcut,
   children,
   onClick,
 }: {
-  icon: ReactNode;
+  shortcut?: string;
   children: ReactNode;
   onClick: () => void;
 }) => (
   <button
     type="button"
     onClick={onClick}
-    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[12.5px] text-content hover:bg-surface-hover [&>svg]:text-content-muted"
+    className="flex w-full items-center rounded-lg px-2.5 py-[9px] text-left text-[13px] text-content hover:bg-surface-hover"
   >
-    {icon}
     {children}
+    {shortcut && (
+      <span className="ml-auto font-mono text-[11px] font-medium text-content-subtle">
+        {shortcut}
+      </span>
+    )}
   </button>
 );

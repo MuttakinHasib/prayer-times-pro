@@ -37,7 +37,7 @@ export const Settings = () => {
   const active = TABS.find((t) => t.id === tabId) ?? TABS[0];
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-[#1c1c1e] text-content">
+    <div className="flex h-screen w-screen flex-col bg-bg text-content">
       <nav className="flex gap-1 border-b border-border px-3 py-2">
         {TABS.map(({ id, label, Icon }) => (
           <button

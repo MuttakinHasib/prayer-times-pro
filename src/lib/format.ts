@@ -38,6 +38,14 @@ export const longDate = (ms: number, tz: string): string => {
   return `${get("weekday")}, ${get("day")} ${get("month")}, ${get("year")}`;
 };
 
+/** Compact mono eyebrow, e.g. "THURSDAY · 18 JUNE" (no year). */
+export const dateEyebrow = (ms: number, tz: string): string => {
+  const parts = longDateFormatter(tz).formatToParts(new Date(ms));
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("weekday")} · ${get("day")} ${get("month")}`.toUpperCase();
+};
+
 /** Umm al-Qura Hijri date, e.g. "3 Muharram 1448 AH", with a whole-day shift. */
 export const hijriDate = ({
   ms,

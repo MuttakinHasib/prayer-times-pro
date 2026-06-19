@@ -7,8 +7,10 @@ import { PrayerList } from "./prayer-list";
 import { PanelSummary } from "./panel-summary";
 import { PanelFooter } from "./panel-footer";
 
+// No outer drop-shadow here: the window is sized to the card, so a CSS shadow
+// would paint into the square corner gaps. The native NSPanel shadow handles it.
 const SHELL =
-  "w-[312px] overflow-hidden rounded-[12px] border-[0.5px] border-white/10 bg-surface text-content backdrop-blur-[30px] backdrop-saturate-[1.8]";
+  "w-[360px] overflow-hidden rounded-[16px] border border-white/[0.08] bg-popover text-content shadow-[inset_0_1px_0_rgba(255,255,255,.06)] backdrop-blur-[40px] backdrop-saturate-[1.4]";
 
 /** The menu-bar dropdown: a dark glass card composed of header / list / summary / footer. */
 export const Panel = () => {
@@ -25,10 +27,11 @@ export const Panel = () => {
   return (
     <div ref={ref} className={SHELL}>
       <PanelHeader state={state} />
+      <div className="h-px bg-divider" />
       <PrayerList state={state} />
-      <div className="h-px bg-border" />
+      <div className="h-px bg-divider" />
       <PanelSummary state={state} />
-      <div className="h-px bg-border" />
+      <div className="h-px bg-divider" />
       <PanelFooter />
     </div>
   );
