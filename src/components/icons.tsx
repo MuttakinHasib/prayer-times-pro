@@ -1,7 +1,4 @@
-// Icons via lucide-react, chosen to mirror the macOS app's SF Symbols as closely
-// as the set allows. The macOS originals (not bundleable on web):
-//   fajr sunrise · sunrise sun.horizon.fill · dhuhr sun.max.fill ·
-//   asr cloud.sun.fill · maghrib sunset.fill · isha moon.stars.fill
+// Time-of-day icons for each prayer, via lucide-react.
 import {
   CloudSun,
   Haze,
@@ -25,8 +22,8 @@ export const PowerIcon = (p: LucideProps) => <Power {...p} />;
 export const MoonIcon = (p: LucideProps) => <Moon {...p} />;
 export const PinIcon = (p: LucideProps) => <Navigation {...p} />;
 
-/** Map a prayer key to its time-of-day icon (mirrors the reference SF Symbols). */
-export function PrayerIcon({ prayer, ...p }: LucideProps & { prayer: string }) {
+/** Map a prayer key to its time-of-day icon. */
+export const PrayerIcon = ({ prayer, ...p }: LucideProps & { prayer: string }) => {
   switch (prayer) {
     case "fajr":
       return <Sunrise {...p} />;
@@ -45,7 +42,7 @@ export function PrayerIcon({ prayer, ...p }: LucideProps & { prayer: string }) {
     default:
       return <Sun {...p} />;
   }
-}
+};
 
 export const PRAYER_NAMES: Record<string, string> = {
   fajr: "Fajr",
