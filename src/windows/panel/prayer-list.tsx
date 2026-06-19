@@ -8,14 +8,23 @@ interface PrayerListProps {
   state: PrayerState;
 }
 
+// Canonical display order — the list always reads in prayer sequence, never by
+// clock time (manual jamaat times can otherwise reorder the rows).
+const ORDER = ["fajr", "sunrise", "ishraq", "dhuhr", "asr", "maghrib", "isha"];
+const orderOf = (prayer: string) => {
+  const i = ORDER.indexOf(prayer);
+  return i === -1 ? ORDER.length : i;
+};
+
 /** Today's times: past dimmed to tertiary, the next one a gold-tinted card. */
 export const PrayerList = memo(({ state }: PrayerListProps) => {
   const { times, next, show_ishraq, ishraq_ms } = state;
 
-  // Insert the optional Ishraq row right after Sunrise.
+  // Order canonically, then insert the optional Ishraq row after Sunrise.
   const rows = useMemo<PrayerInstant[]>(() => {
-    if (!show_ishraq || ishraq_ms == null) return times;
-    return times.flatMap((t) =>
+    const ordered = [...times].sort((a, b) => orderOf(a.prayer) - orderOf(b.prayer));
+    if (!show_ishraq || ishraq_ms == null) return ordered;
+    return ordered.flatMap((t) =>
       t.prayer === "sunrise" ? [t, { prayer: "ishraq", at_ms: ishraq_ms }] : [t],
     );
   }, [times, show_ishraq, ishraq_ms]);
