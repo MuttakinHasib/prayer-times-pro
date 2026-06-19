@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Panel } from "./windows/panel/panel";
 import { Backdrop } from "./windows/backdrop/backdrop";
+import { Settings } from "./windows/settings/settings";
 import "./index.css";
 
 // One Vite bundle, multiple Tauri webview windows routed by label. M2 ships the
@@ -11,6 +12,8 @@ const rootFor = (label: string) => {
   switch (label) {
     case "backdrop":
       return <Backdrop />;
+    case "settings":
+      return <Settings />;
     case "panel":
     default:
       return <Panel />;

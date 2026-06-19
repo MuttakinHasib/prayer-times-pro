@@ -30,6 +30,13 @@ pub use adapters::{
     MoonsightingCommitteeAdapter, MwlAdapter, UmmAlQuraAdapter,
 };
 pub use models::{
-    current_waqt::CurrentWaqt, notification_sound::NotificationSound, prayer::Prayer,
+    current_waqt::CurrentWaqt,
+    notification::{NotificationDefaults, PrayerNotificationConfig, ResolvedNotification},
+    notification_sound::NotificationSound,
+    prayer::Prayer,
     prayer_times::PrayerTimes,
+    settings::{
+        default_jamaat_times, AppSettings, CalculationMode, FocusBlurIntensity, FocusTrigger,
+        LocationMode, MenuBarCountdownMode, MenuBarStyle, FALLBACK_EARLY_LEAD_MINUTES,
+    },
 };

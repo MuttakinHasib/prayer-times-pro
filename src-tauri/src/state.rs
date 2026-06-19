@@ -1,21 +1,31 @@
-//! Live prayer-time state: holds the runtime config + today/tomorrow times,
-//! recomputes on day rollover, and derives the tray label + the frontend DTO.
-//!
-//! M2 uses a hardcoded [`AppConfig`]; M3 replaces it with the persisted
-//! `AppSettings` loaded from `tauri-plugin-store`.
+//! Live prayer-time state: holds the settings + today/tomorrow times, recomputes
+//! on day rollover or a settings change, and derives the tray label + frontend DTO.
 
 use std::sync::Mutex;
 
-use chrono::{DateTime, Duration, NaiveDate, Utc};
+use chrono::{DateTime, Duration, NaiveDate, Timelike, Utc};
 use chrono_tz::Tz;
 use prayer_core::{
-    calculate, CalculationMethodAdapter, Coordinates, CurrentWaqt, MethodRegistry, Prayer,
+    calculate, AppSettings, CalculationMethodAdapter, CalculationMode, Coordinates, CurrentWaqt,
+    HighLatitudeRule, MenuBarCountdownMode, MenuBarStyle, MethodRegistry, MwlAdapter, Prayer,
     PrayerTimes,
 };
 use serde::Serialize;
 
-/// Stable lowercase key for a prayer, matching the `prayer-core` serde encoding
-/// and the frontend's expectations.
+/// Fallback location until the user sets one (Location & Time tab) / auto-detect (M5).
+const DEFAULT_COORDINATES: Coordinates = Coordinates {
+    latitude: 23.8103,
+    longitude: 90.4125,
+    elevation: 0.0,
+};
+
+fn system_tz() -> Tz {
+    iana_time_zone::get_timezone()
+        .ok()
+        .and_then(|id| id.parse().ok())
+        .unwrap_or(chrono_tz::UTC)
+}
+
 fn prayer_key(p: Prayer) -> &'static str {
     match p {
         Prayer::Fajr => "fajr",
@@ -27,7 +37,6 @@ fn prayer_key(p: Prayer) -> &'static str {
     }
 }
 
-/// English display name (M6 moves naming to frontend i18n).
 fn prayer_name(p: Prayer) -> &'static str {
     match p {
         Prayer::Fajr => "Fajr",
@@ -52,43 +61,14 @@ fn short_countdown(seconds: i64) -> String {
     }
 }
 
-/// Runtime configuration for the engine + display. M2 placeholder; M3 sources
-/// this from persisted `AppSettings`.
-#[derive(Clone)]
-pub struct AppConfig {
-    pub method_id: String,
-    pub hanafi_asr: bool,
-    pub coordinates: Coordinates,
-    pub tz: Tz,
-    pub show_ishraq: bool,
-    pub show_hijri: bool,
-    pub hijri_adjustment: i32,
-}
-
-impl Default for AppConfig {
-    fn default() -> Self {
-        // System timezone, falling back to UTC. A sensible default location/method
-        // (Dhaka, Karachi + Hanafi) so the panel is meaningful before settings and
-        // location land in M3/M5.
-        let tz: Tz = iana_time_zone::get_timezone()
-            .ok()
-            .and_then(|id| id.parse().ok())
-            .unwrap_or(chrono_tz::UTC);
-        Self {
-            method_id: "karachi".into(),
-            hanafi_asr: true,
-            coordinates: Coordinates::new(23.8103, 90.4125),
-            tz,
-            show_ishraq: false,
-            show_hijri: true,
-            hijri_adjustment: 0,
-        }
-    }
+/// Short wall-clock for the tray label, e.g. "4:35 AM".
+fn clock_label(dt: DateTime<Tz>) -> String {
+    let (pm, hour12) = dt.hour12();
+    format!("{hour12}:{:02} {}", dt.minute(), if pm { "PM" } else { "AM" })
 }
 
 /// Serializable snapshot the frontend renders. All instants are epoch
-/// milliseconds; the frontend formats clocks/dates with `Intl` in `tz` and runs
-/// its own 1 Hz countdown from `next.at_ms`.
+/// milliseconds; the frontend formats clocks/dates with `Intl` in `tz`.
 #[derive(Serialize, Clone)]
 pub struct PrayerState {
     pub tz: String,
@@ -118,26 +98,25 @@ pub struct WaqtDto {
     pub is_obligatory: bool,
 }
 
-/// The live clock: today/tomorrow times,
-/// recompute on rollover, derived next/countdown.
+/// The live clock: today/tomorrow times, recompute on rollover, derived next/countdown.
 pub struct Clock {
-    pub config: AppConfig,
+    settings: AppSettings,
     today: PrayerTimes,
     tomorrow: PrayerTimes,
     now: DateTime<Tz>,
     last_day: NaiveDate,
-    /// Last signature pushed to the frontend, to throttle `state-changed` events.
     emitted: Option<(NaiveDate, &'static str)>,
 }
 
 impl Clock {
-    pub fn new(config: AppConfig) -> Self {
-        let now = Utc::now().with_timezone(&config.tz);
-        let today = Self::compute(&config, now, 0);
-        let tomorrow = Self::compute(&config, now, 1);
+    pub fn new(settings: AppSettings) -> Self {
+        let tz = resolved_tz(&settings);
+        let now = Utc::now().with_timezone(&tz);
+        let today = compute(&settings, now, 0);
+        let tomorrow = compute(&settings, now, 1);
         Self {
             last_day: now.date_naive(),
-            config,
+            settings,
             today,
             tomorrow,
             now,
@@ -145,48 +124,39 @@ impl Clock {
         }
     }
 
-    fn compute(config: &AppConfig, now: DateTime<Tz>, offset_days: i64) -> PrayerTimes {
-        let params = MethodRegistry::resolve(&config.method_id, config.hanafi_asr, None)
-            .map(|a| a.resolve(config.coordinates))
-            .unwrap_or_else(|| prayer_core::MwlAdapter.resolve(config.coordinates));
-        let day = (now + Duration::days(offset_days)).date_naive();
-        calculate(day, config.coordinates, &params, config.tz)
+    pub fn settings(&self) -> AppSettings {
+        self.settings.clone()
+    }
+
+    /// Replace the settings and recompute. Returns nothing; callers re-emit state.
+    pub fn set_settings(&mut self, settings: AppSettings) {
+        self.settings = settings;
+        self.now = Utc::now().with_timezone(&resolved_tz(&self.settings));
+        self.recompute();
+        self.emitted = None; // force the next emit after a settings change
+    }
+
+    fn recompute(&mut self) {
+        self.today = compute(&self.settings, self.now, 0);
+        self.tomorrow = compute(&self.settings, self.now, 1);
+        self.last_day = self.now.date_naive();
     }
 
     fn method_name(&self) -> String {
-        MethodRegistry::resolve(&self.config.method_id, self.config.hanafi_asr, None)
+        MethodRegistry::resolve(&self.settings.method_id, self.settings.hanafi_asr, None)
             .map(|a| a.display_name())
             .unwrap_or_else(|| "Muslim World League".into())
     }
 
-    /// Advance to `now_utc`, recomputing today/tomorrow on a civil-day rollover.
-    /// Returns `true` when the schedule was recomputed.
-    pub fn tick(&mut self, now_utc: DateTime<Utc>) -> bool {
-        self.now = now_utc.with_timezone(&self.config.tz);
+    /// Advance to `now_utc`, recomputing on a civil-day rollover.
+    pub fn tick(&mut self, now_utc: DateTime<Utc>) {
+        self.now = now_utc.with_timezone(&resolved_tz(&self.settings));
         let day = self.now.date_naive();
         if day != self.last_day {
-            self.last_day = day;
-            self.today = Self::compute(&self.config, self.now, 0);
-            self.tomorrow = Self::compute(&self.config, self.now, 1);
-            true
-        } else {
-            false
+            self.recompute();
         }
     }
 
-    /// Recompute immediately (e.g. after a config change). Wired in M3 when
-    /// settings can change at runtime; defined now so the clock API is complete.
-    #[allow(dead_code)]
-    pub fn recompute(&mut self) {
-        self.today = Self::compute(&self.config, self.now, 0);
-        self.tomorrow = Self::compute(&self.config, self.now, 1);
-        self.last_day = self.now.date_naive();
-        // Force the next `should_emit` to push: a config change can leave the
-        // (day, next-prayer) signature unchanged while the actual times moved.
-        self.emitted = None;
-    }
-
-    /// The upcoming prayer: next today, else tomorrow's Fajr.
     fn next_event(&self) -> Option<(Prayer, DateTime<Tz>)> {
         self.today.next(self.now).or_else(|| self.tomorrow.next(self.now))
     }
@@ -197,23 +167,54 @@ impl Clock {
             .unwrap_or(0)
     }
 
-    /// Compact tray label, e.g. "Fajr in 5h 38m". (Tray icon carries the glyph.)
+    /// Tray label per the configured [`MenuBarStyle`] / countdown mode.
     pub fn tray_label(&self) -> String {
-        match self.next_event() {
-            Some((p, _)) => format!("{} in {}", prayer_name(p), short_countdown(self.seconds_until_next())),
-            None => "Prayer Times".into(),
+        let Some((prayer, time)) = self.next_event() else {
+            return "Prayer Times".into();
+        };
+        let style = self.settings.menu_bar_style;
+        let name = prayer_name(prayer);
+
+        // The icon is the tray image; here we only build the text portion.
+        let value = match style {
+            MenuBarStyle::IconOnly => String::new(),
+            MenuBarStyle::NextPrayerClock | MenuBarStyle::IconNameClock => clock_label(time),
+            _ => self.countdown_text(prayer),
+        };
+        let shows_name = matches!(
+            style,
+            MenuBarStyle::NextPrayerCountdown
+                | MenuBarStyle::IconNameCountdown
+                | MenuBarStyle::NextPrayerClock
+                | MenuBarStyle::IconNameClock
+        );
+        match (shows_name, value.is_empty()) {
+            (_, true) if shows_name => name.to_string(),
+            (true, _) => format!("{name} {value}"),
+            (false, true) => String::new(),
+            (false, _) => value,
         }
     }
 
-    /// A signature that changes when the rendered state must refresh (day rolled
-    /// over or the next prayer changed).
-    fn signature(&self) -> (NaiveDate, &'static str) {
+    /// "in 1h 24m", or "40m left" in current-waqt mode while an obligatory prayer runs.
+    fn countdown_text(&self, next: Prayer) -> String {
+        if self.settings.menu_bar_countdown_mode == MenuBarCountdownMode::CurrentWaqt {
+            if let Some(waqt) = CurrentWaqt::resolve(self.now, &self.today, &self.tomorrow) {
+                if waqt.is_obligatory() {
+                    let left = (waqt.end - self.now).num_seconds().max(0);
+                    return format!("{} left", short_countdown(left));
+                }
+            }
+        }
+        let _ = next;
+        format!("in {}", short_countdown(self.seconds_until_next()))
+    }
+
+    pub fn signature(&self) -> (NaiveDate, &'static str) {
         let next = self.next_event().map(|(p, _)| prayer_key(p)).unwrap_or("none");
         (self.last_day, next)
     }
 
-    /// `true` when the rendered state changed since the last emit (and records
-    /// the new signature). Used by the tick loop to throttle `state-changed`.
     pub fn should_emit(&mut self) -> bool {
         let sig = self.signature();
         if self.emitted == Some(sig) {
@@ -224,18 +225,16 @@ impl Clock {
         }
     }
 
-    /// Build the frontend DTO.
     pub fn snapshot(&self) -> PrayerState {
         let next = self
             .next_event()
             .map(|(p, t)| PrayerInstant { prayer: prayer_key(p), at_ms: t.timestamp_millis() });
-        let current_waqt = CurrentWaqt::resolve(self.now, &self.today, &self.tomorrow).map(|w| {
-            WaqtDto {
+        let current_waqt =
+            CurrentWaqt::resolve(self.now, &self.today, &self.tomorrow).map(|w| WaqtDto {
                 prayer: prayer_key(w.prayer),
                 end_ms: w.end.timestamp_millis(),
                 is_obligatory: w.is_obligatory(),
-            }
-        });
+            });
         let times = self
             .today
             .ordered()
@@ -243,20 +242,93 @@ impl Clock {
             .map(|(p, t)| PrayerInstant { prayer: prayer_key(p), at_ms: t.timestamp_millis() })
             .collect();
         PrayerState {
-            tz: self.config.tz.name().to_string(),
+            tz: resolved_tz(&self.settings).name().to_string(),
             now_ms: self.now.timestamp_millis(),
             method_name: self.method_name(),
-            latitude: self.config.coordinates.latitude,
-            longitude: self.config.coordinates.longitude,
-            show_ishraq: self.config.show_ishraq,
-            show_hijri: self.config.show_hijri,
-            hijri_adjustment: self.config.hijri_adjustment,
+            latitude: resolved_coordinates(&self.settings).latitude,
+            longitude: resolved_coordinates(&self.settings).longitude,
+            show_ishraq: self.settings.show_ishraq_time,
+            show_hijri: self.settings.show_hijri_date,
+            hijri_adjustment: self.settings.hijri_day_adjustment,
             ishraq_ms: self.today.ishraq(15).map(|t| t.timestamp_millis()),
             next,
             current_waqt,
             times,
         }
     }
+}
+
+fn resolved_coordinates(settings: &AppSettings) -> Coordinates {
+    // Auto-detected location lands in M5; until then use the manual coordinates.
+    settings.manual_coordinates.unwrap_or(DEFAULT_COORDINATES)
+}
+
+fn resolved_tz(settings: &AppSettings) -> Tz {
+    settings
+        .timezone_override
+        .as_deref()
+        .and_then(|id| id.parse().ok())
+        .unwrap_or_else(system_tz)
+}
+
+fn resolved_params(settings: &AppSettings, coords: Coordinates) -> prayer_core::CalculationParameters {
+    let mut params = MethodRegistry::resolve(
+        &settings.method_id,
+        settings.hanafi_asr,
+        settings.manual_parameters.clone(),
+    )
+    .map(|a| a.resolve(coords))
+    .unwrap_or_else(|| MwlAdapter.resolve(coords));
+
+    // The user's explicit high-latitude rule wins; `Automatic` keeps the method's
+    // recommended rule (the engine never sees `Automatic`).
+    if settings.high_latitude_rule != HighLatitudeRule::Automatic {
+        params.high_latitude_rule = settings.high_latitude_rule;
+    }
+    params
+}
+
+fn compute(settings: &AppSettings, now: DateTime<Tz>, offset_days: i64) -> PrayerTimes {
+    let tz = resolved_tz(settings);
+    let coords = resolved_coordinates(settings);
+    let params = resolved_params(settings, coords);
+    let day = (now + Duration::days(offset_days)).date_naive();
+    let astronomical = calculate(day, coords, &params, tz);
+
+    if settings.calculation_mode != CalculationMode::Manual {
+        return astronomical;
+    }
+    apply_jamaat(astronomical, settings, day, tz)
+}
+
+/// Replace the five obligatory times with the fixed jamaat schedule (minutes since
+/// local midnight), keeping astronomical Sunrise/Ishraq.
+fn apply_jamaat(
+    astronomical: PrayerTimes,
+    settings: &AppSettings,
+    day: NaiveDate,
+    tz: Tz,
+) -> PrayerTimes {
+    use chrono::TimeZone;
+    let midnight = tz
+        .from_local_datetime(&day.and_hms_opt(0, 0, 0).expect("valid midnight"))
+        .earliest();
+    let Some(midnight) = midnight else {
+        return astronomical;
+    };
+
+    let mut times = astronomical.times.clone();
+    // Non-jamaat events (Sunrise) keep their astronomical times only when the
+    // user opts in; otherwise the manual schedule stands alone.
+    if !settings.manual_keep_waqt {
+        times.remove(&Prayer::Sunrise);
+    }
+    for prayer in Prayer::OBLIGATORY {
+        if let Some(&minutes) = settings.jamaat_times.get(&prayer) {
+            times.insert(prayer, midnight + Duration::minutes(minutes as i64));
+        }
+    }
+    PrayerTimes::new(astronomical.date, times)
 }
 
 /// Shared clock guarded for cross-thread access from the tick loop and commands.
