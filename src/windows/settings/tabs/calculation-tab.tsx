@@ -69,6 +69,15 @@ export const CalculationTab = ({ settings, update }: Props) => {
               onChange={(highLatitudeRule) => update({ highLatitudeRule })}
             />
           </Row>
+          <Row
+            label="Auto-detect method from location"
+            sublabel="Pick a regional method when detecting location."
+          >
+            <Toggle
+              checked={settings.autoDetectMethod}
+              onChange={(autoDetectMethod) => update({ autoDetectMethod })}
+            />
+          </Row>
         </Section>
       ) : (
         <>

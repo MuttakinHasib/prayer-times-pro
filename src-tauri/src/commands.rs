@@ -2,7 +2,7 @@
 
 use std::sync::PoisonError;
 
-use prayer_core::AppSettings;
+use prayer_core::{AppSettings, MethodRegistry};
 use tauri::{AppHandle, Emitter, LogicalSize, Manager};
 
 use crate::state::{PrayerState, SharedClock};
@@ -87,4 +87,38 @@ pub fn check_for_updates(app: AppHandle) {
 pub fn stop_adhan(app: AppHandle, audio: tauri::State<'_, crate::audio::Audio>) {
     audio.stop();
     let _ = app.emit(crate::scheduler::ADHAN_EVENT, false);
+}
+
+/// Detect the location from IP, fill coordinates + timezone (+ method when
+/// auto-detect is on), persist, recompute, and return the updated settings.
+#[tauri::command]
+pub async fn detect_location(
+    app: AppHandle,
+    clock: tauri::State<'_, SharedClock>,
+) -> Result<AppSettings, String> {
+    // Network call first — no lock held across the await.
+    let detected = crate::location::detect().await?;
+
+    let (settings, label, snapshot) = {
+        let mut c = clock.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut s = c.settings();
+        s.manual_coordinates = Some(detected.coords);
+        if let Some(tz) = detected.tz {
+            s.timezone_override = Some(tz);
+        }
+        if s.auto_detect_method {
+            s.method_id = MethodRegistry::method_id_for_country(detected.country_code.as_deref());
+        }
+        c.set_settings(s.clone());
+        (s, c.tray_label(), c.snapshot())
+    };
+
+    if let Err(err) = settings_io::save(&app, &settings) {
+        eprintln!("settings: failed to persist ({err})");
+    }
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        let _ = tray.set_title(Some(label));
+    }
+    let _ = app.emit(STATE_EVENT, snapshot);
+    Ok(settings)
 }
