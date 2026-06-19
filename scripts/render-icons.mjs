@@ -4,26 +4,35 @@ import { Resvg } from "@resvg/resvg-js";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import {
+  MIHRAB_ARCH_SOLID,
+  MIHRAB_CRESCENT,
+  MIHRAB_FRAME_INNER,
+  MIHRAB_FRAME_OUTER,
+  MIHRAB_GOLD_STOPS,
+} from "../src/lib/mihrab.ts";
 
 const ICONS = join(dirname(fileURLToPath(import.meta.url)), "..", "src-tauri", "icons");
 
-const GOLD = `<radialGradient id="gold" cx="42%" cy="16%" r="92%">
-    <stop offset="0" stop-color="#ecd49a"/><stop offset="0.6" stop-color="#c8a968"/><stop offset="1" stop-color="#a8893f"/>
-  </radialGradient>`;
+const goldStops = MIHRAB_GOLD_STOPS.map(
+  (s) => `<stop offset="${s.offset}" stop-color="${s.color}"/>`,
+).join("");
+const GOLD = `<radialGradient id="gold" cx="42%" cy="16%" r="92%">${goldStops}</radialGradient>`;
+
+const { keep, cut } = MIHRAB_CRESCENT;
 
 // Mihrab mark (viewBox 0 0 100 100): niche frame + crescent carved from gold.
 const markFull = (fill) => `
   <mask id="fr"><rect width="100" height="100" fill="#000"/>
-    <path d="M27,85 L27,52 C27,31 38,17 50,12 C62,17 73,31 73,52 L73,85 Z" fill="#fff"/>
-    <path d="M36,85 L36,54 C36,38 43,27 50,23 C57,27 64,38 64,54 L64,85 Z" fill="#000"/></mask>
+    <path d="${MIHRAB_FRAME_OUTER}" fill="#fff"/>
+    <path d="${MIHRAB_FRAME_INNER}" fill="#000"/></mask>
   <mask id="cr"><rect width="100" height="100" fill="#000"/>
-    <circle cx="51.5" cy="49" r="8.7" fill="#fff"/><circle cx="57.5" cy="44.5" r="7.1" fill="#000"/></mask>
+    <circle cx="${keep.cx}" cy="${keep.cy}" r="${keep.r}" fill="#fff"/><circle cx="${cut.cx}" cy="${cut.cy}" r="${cut.r}" fill="#000"/></mask>
   <rect width="100" height="100" fill="${fill}" mask="url(#fr)"/>
   <rect width="100" height="100" fill="${fill}" mask="url(#cr)"/>`;
 
 // Solid archway silhouette for small / monochrome use.
-const markSolid = (fill) =>
-  `<path d="M30,86 L30,52 C30,31 40,17 50,12 C60,17 70,31 70,52 L70,86 Z" fill="${fill}"/>`;
+const markSolid = (fill) => `<path d="${MIHRAB_ARCH_SOLID}" fill="${fill}"/>`;
 
 // Full app icon: obsidian rounded-square tile + centered gold mihrab.
 const appIcon = (px) => {

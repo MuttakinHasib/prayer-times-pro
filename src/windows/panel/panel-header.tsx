@@ -5,6 +5,10 @@ import { PRAYER_NAMES } from "../../components/icons";
 import { LiveCountdown } from "./live-countdown";
 import { PrayerRing } from "./prayer-ring";
 
+// Fallback ring window when no earlier prayer exists today (e.g. before Fajr):
+// assume a 6-hour run-up so the arc still reads as nearly complete.
+const FALLBACK_WINDOW_MS = 6 * 60 * 60 * 1000;
+
 /** Mono date eyebrow, Hijri line, and the next-prayer hero with countdown ring. */
 export const PanelHeader = ({ state }: { state: PrayerState }) => {
   const { next, times, tz, now_ms, show_hijri, hijri_adjustment } = state;
@@ -13,7 +17,7 @@ export const PanelHeader = ({ state }: { state: PrayerState }) => {
   const fromMs = useMemo(() => {
     if (!next) return now_ms;
     const past = times.filter((t) => t.at_ms < next.at_ms).map((t) => t.at_ms);
-    return past.length ? Math.max(...past) : next.at_ms - 6 * 3_600_000;
+    return past.length ? Math.max(...past) : next.at_ms - FALLBACK_WINDOW_MS;
   }, [times, next, now_ms]);
 
   return (

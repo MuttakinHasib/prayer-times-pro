@@ -1,5 +1,12 @@
 import { useId } from "react";
 import { cn } from "../lib/cn";
+import {
+  MIHRAB_ARCH_SOLID,
+  MIHRAB_CRESCENT,
+  MIHRAB_FRAME_INNER,
+  MIHRAB_FRAME_OUTER,
+  MIHRAB_GOLD_STOPS,
+} from "../lib/mihrab";
 
 /**
  * The Mihrab brand mark — a pointed prayer-niche archway framing a crescent.
@@ -8,11 +15,6 @@ import { cn } from "../lib/cn";
  */
 type MarkDetail = "full" | "solid";
 type MarkTone = "gold" | "mono" | "light";
-
-// Geometry from the brand spec (viewBox 0 0 100 100).
-const FRAME_OUTER = "M27,85 L27,52 C27,31 38,17 50,12 C62,17 73,31 73,52 L73,85 Z";
-const FRAME_INNER = "M36,85 L36,54 C36,38 43,27 50,23 C57,27 64,38 64,54 L64,85 Z";
-const ARCH_SOLID = "M30,86 L30,52 C30,31 40,17 50,12 C60,17 70,31 70,52 L70,86 Z";
 
 export const MihrabMark = ({
   size = 100,
@@ -43,27 +45,27 @@ export const MihrabMark = ({
       {tone === "gold" && (
         <defs>
           <radialGradient id={gradId} cx="42%" cy="16%" r="92%">
-            <stop offset="0" stopColor="#ecd49a" />
-            <stop offset="0.6" stopColor="#c8a968" />
-            <stop offset="1" stopColor="#a8893f" />
+            {MIHRAB_GOLD_STOPS.map((s) => (
+              <stop key={s.offset} offset={s.offset} stopColor={s.color} />
+            ))}
           </radialGradient>
         </defs>
       )}
 
       {detail === "solid" ? (
-        <path d={ARCH_SOLID} fill={fill} />
+        <path d={MIHRAB_ARCH_SOLID} fill={fill} />
       ) : (
         <>
           <defs>
             <mask id={frameMask}>
               <rect width="100" height="100" fill="#000" />
-              <path d={FRAME_OUTER} fill="#fff" />
-              <path d={FRAME_INNER} fill="#000" />
+              <path d={MIHRAB_FRAME_OUTER} fill="#fff" />
+              <path d={MIHRAB_FRAME_INNER} fill="#000" />
             </mask>
             <mask id={crescentMask}>
               <rect width="100" height="100" fill="#000" />
-              <circle cx="51.5" cy="49" r="8.7" fill="#fff" />
-              <circle cx="57.5" cy="44.5" r="7.1" fill="#000" />
+              <circle cx={MIHRAB_CRESCENT.keep.cx} cy={MIHRAB_CRESCENT.keep.cy} r={MIHRAB_CRESCENT.keep.r} fill="#fff" />
+              <circle cx={MIHRAB_CRESCENT.cut.cx} cy={MIHRAB_CRESCENT.cut.cy} r={MIHRAB_CRESCENT.cut.r} fill="#000" />
             </mask>
           </defs>
           <rect width="100" height="100" fill={fill} mask={`url(#${frameMask})`} />

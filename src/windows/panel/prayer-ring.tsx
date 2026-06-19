@@ -1,19 +1,25 @@
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
+
+const TICK_MS = 1000;
+/** Inner disc inset and crescent size, as fractions of the ring diameter. */
+const INNER_INSET_PX = 12;
+const CRESCENT_RATIO = 0.22;
+const FULL_TURN_DEG = 360;
 
 /** Fraction 0–1 of the current→next window elapsed, re-evaluated each second. */
 const useProgress = (fromMs: number, toMs: number): number => {
-  const frac = () => {
+  const frac = useCallback(() => {
     const span = toMs - fromMs;
     if (span <= 0) return 1;
     return Math.min(1, Math.max(0, (Date.now() - fromMs) / span));
-  };
+  }, [fromMs, toMs]);
+
   const [value, setValue] = useState(frac);
   useEffect(() => {
     setValue(frac());
-    const id = setInterval(() => setValue(frac()), 1000);
+    const id = setInterval(() => setValue(frac()), TICK_MS);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fromMs, toMs]);
+  }, [frac]);
   return value;
 };
 
@@ -47,8 +53,8 @@ export const PrayerRing = ({
   toMs: number;
   size?: number;
 }) => {
-  const deg = Math.round(360 * useProgress(fromMs, toMs));
-  const inner = size - 12;
+  const deg = Math.round(FULL_TURN_DEG * useProgress(fromMs, toMs));
+  const inner = size - INNER_INSET_PX;
   return (
     <div
       className="relative flex shrink-0 items-center justify-center rounded-full"
@@ -63,7 +69,7 @@ export const PrayerRing = ({
         className="flex items-center justify-center rounded-full bg-surface"
         style={{ width: inner, height: inner }}
       >
-        <Crescent size={Math.round(size * 0.22)} />
+        <Crescent size={Math.round(size * CRESCENT_RATIO)} />
       </div>
     </div>
   );
