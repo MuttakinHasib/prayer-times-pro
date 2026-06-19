@@ -6,7 +6,7 @@ use std::io::Cursor;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
-use rodio::{Decoder, OutputStream, Sink};
+use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink};
 
 const ADHAN_MAKKAH: &[u8] = include_bytes!("../audio/adhan-makkah.m4a");
 const ADHAN_MADINAH: &[u8] = include_bytes!("../audio/adhan-madinah.m4a");
@@ -28,9 +28,10 @@ impl Audio {
     pub fn spawn() -> Self {
         let (tx, rx) = channel::<Command>();
         thread::spawn(move || {
-            let Ok((_stream, handle)) = OutputStream::try_default() else {
-                return; // no audio device; drain commands as no-ops
-            };
+            // Open the device lazily and keep it: a missing device at startup must
+            // not kill the thread (that would close the channel), so we keep
+            // draining commands and just no-op playback until a device appears.
+            let mut stream: Option<(OutputStream, OutputStreamHandle)> = None;
             let mut sink: Option<Sink> = None;
             while let Ok(cmd) = rx.recv() {
                 match cmd {
@@ -38,15 +39,28 @@ impl Audio {
                         if let Some(s) = sink.take() {
                             s.stop();
                         }
+                        if stream.is_none() {
+                            match OutputStream::try_default() {
+                                Ok(s) => stream = Some(s),
+                                Err(err) => {
+                                    eprintln!("audio: no output device: {err}");
+                                    continue;
+                                }
+                            }
+                        }
+                        let Some((_stream, handle)) = stream.as_ref() else {
+                            continue;
+                        };
                         let bytes = if madinah { ADHAN_MADINAH } else { ADHAN_MAKKAH };
-                        if let Ok(new_sink) = Sink::try_new(&handle) {
-                            match Decoder::new(Cursor::new(bytes)) {
+                        match Sink::try_new(handle) {
+                            Ok(new_sink) => match Decoder::new(Cursor::new(bytes)) {
                                 Ok(source) => {
                                     new_sink.append(source);
                                     sink = Some(new_sink);
                                 }
                                 Err(err) => eprintln!("audio: adhan decode failed: {err}"),
-                            }
+                            },
+                            Err(err) => eprintln!("audio: sink create failed: {err}"),
                         }
                     }
                     Command::Stop => {

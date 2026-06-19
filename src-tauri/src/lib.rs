@@ -55,10 +55,13 @@ pub fn run() {
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
             // Ask once for notification permission (no-op if already decided).
-            use tauri_plugin_notification::NotificationExt;
-            if matches!(app.notification().permission_state(), Ok(state) if state != tauri_plugin_notification::PermissionState::Granted)
-            {
-                let _ = app.notification().request_permission();
+            use tauri_plugin_notification::{NotificationExt, PermissionState};
+            match app.notification().permission_state() {
+                Ok(PermissionState::Granted) => {}
+                Ok(_) => {
+                    let _ = app.notification().request_permission();
+                }
+                Err(err) => eprintln!("notification: permission check failed: {err}"),
             }
 
             // Load persisted settings into the live clock.
