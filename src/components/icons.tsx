@@ -1,7 +1,6 @@
 // Time-of-day icons for each prayer, via lucide-react.
 import {
   CloudSun,
-  Haze,
   type LucideProps,
   Moon,
   MoonStar,
@@ -10,6 +9,7 @@ import {
   RefreshCw,
   Settings,
   Sun,
+  SunDim,
   SunMedium,
   Sunrise,
   Sunset,
@@ -28,7 +28,7 @@ export const PrayerIcon = ({ prayer, ...p }: LucideProps & { prayer: string }) =
     case "fajr":
       return <Sunrise {...p} />;
     case "sunrise":
-      return <Haze {...p} />;
+      return <SunDim {...p} />;
     case "ishraq":
       return <SunMedium {...p} />;
     case "dhuhr":

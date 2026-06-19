@@ -1,16 +1,14 @@
-import { memo, useCallback, useEffect, useId, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
+import { PrayerIcon } from "../../components/icons";
 
 const TICK_MS = 1000;
-/** Inner disc inset and crescent size, as fractions of the ring diameter. */
+/** Inner-disc inset and centre-glyph size, relative to the ring diameter. */
 const INNER_INSET_PX = 12;
-const CRESCENT_RATIO = 0.22;
+const GLYPH_RATIO = 0.34;
 const FULL_TURN_DEG = 360;
 
-interface CrescentProps {
-  size: number;
-}
-
 interface PrayerRingProps {
+  prayer: string;
   fromMs: number;
   toMs: number;
   size?: number;
@@ -44,29 +42,11 @@ const useRingDegrees = (fromMs: number, toMs: number): number => {
   return deg;
 };
 
-/** A small gold crescent built from two offset circles (static — memoized). */
-const Crescent = memo(({ size }: CrescentProps) => {
-  const id = useId().replace(/:/g, "");
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
-      <defs>
-        <mask id={`crescent-${id}`}>
-          <rect width="100" height="100" fill="#000" />
-          <circle cx="48" cy="50" r="42" fill="#fff" />
-          <circle cx="63" cy="40" r="35" fill="#000" />
-        </mask>
-      </defs>
-      <rect width="100" height="100" fill="var(--c-accent)" mask={`url(#crescent-${id})`} />
-    </svg>
-  );
-});
-Crescent.displayName = "Crescent";
-
 /**
  * The hero countdown ring: a conic-gradient arc tracks progress toward the next
- * prayer, wrapping an inner disc with the crescent glyph.
+ * prayer, wrapping an inner disc with that prayer's glyph.
  */
-export const PrayerRing = memo(({ fromMs, toMs, size = 64 }: PrayerRingProps) => {
+export const PrayerRing = memo(({ prayer, fromMs, toMs, size = 56 }: PrayerRingProps) => {
   const deg = useRingDegrees(fromMs, toMs);
   const inner = size - INNER_INSET_PX;
   return (
@@ -82,7 +62,12 @@ export const PrayerRing = memo(({ fromMs, toMs, size = 64 }: PrayerRingProps) =>
         className="flex items-center justify-center rounded-full bg-surface"
         style={{ width: inner, height: inner }}
       >
-        <Crescent size={Math.round(size * CRESCENT_RATIO)} />
+        <PrayerIcon
+          prayer={prayer}
+          size={Math.round(size * GLYPH_RATIO)}
+          strokeWidth={1.75}
+          className="text-accent"
+        />
       </div>
     </div>
   );
