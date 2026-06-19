@@ -36,7 +36,7 @@ pub use models::{
     prayer::Prayer,
     prayer_times::PrayerTimes,
     settings::{
-        AppSettings, CalculationMode, FocusBlurIntensity, FocusTrigger, LocationMode,
-        MenuBarCountdownMode, MenuBarStyle,
+        default_jamaat_times, AppSettings, CalculationMode, FocusBlurIntensity, FocusTrigger,
+        LocationMode, MenuBarCountdownMode, MenuBarStyle, FALLBACK_EARLY_LEAD_MINUTES,
     },
 };

@@ -318,6 +318,11 @@ fn apply_jamaat(
     };
 
     let mut times = astronomical.times.clone();
+    // Non-jamaat events (Sunrise) keep their astronomical times only when the
+    // user opts in; otherwise the manual schedule stands alone.
+    if !settings.manual_keep_waqt {
+        times.remove(&Prayer::Sunrise);
+    }
     for prayer in Prayer::OBLIGATORY {
         if let Some(&minutes) = settings.jamaat_times.get(&prayer) {
             times.insert(prayer, midnight + Duration::minutes(minutes as i64));

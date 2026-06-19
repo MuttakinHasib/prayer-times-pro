@@ -182,7 +182,13 @@ impl AppSettings {
     /// it resolves to a positive lead. Sunrise never carries Adhan or iqamah.
     pub fn resolved_notification(&self, prayer: Prayer) -> ResolvedNotification {
         let cfg = self.notifications.get(&prayer).cloned().unwrap_or_default();
-        let lead = self.early_lead_minutes(prayer);
+        // A reminder stays on whenever the user enabled it: a non-positive lead
+        // (unset/zero/negative) means "no concrete lead set", so fall back to
+        // FALLBACK_EARLY_LEAD_MINUTES rather than silently dropping the reminder.
+        let lead = match self.early_lead_minutes(prayer) {
+            n if n > 0 => n,
+            _ => FALLBACK_EARLY_LEAD_MINUTES,
+        };
         let iqamah = if prayer.is_obligatory() {
             cfg.iqamah_offset_minutes_override
                 .unwrap_or(self.notification_defaults.iqamah_offset_minutes)
@@ -193,8 +199,8 @@ impl AppSettings {
             notify: cfg.notify,
             sound: cfg.sound_override.unwrap_or(self.notification_defaults.sound),
             play_full_adhan: prayer.is_obligatory() && cfg.play_full_adhan,
-            early_reminder_enabled: cfg.early_reminder_enabled && lead > 0,
-            early_lead_minutes: lead.max(1),
+            early_reminder_enabled: cfg.early_reminder_enabled,
+            early_lead_minutes: lead,
             iqamah_offset_minutes: iqamah.max(0),
         }
     }

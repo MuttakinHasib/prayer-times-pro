@@ -22,6 +22,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     if (!current) return;
     const next = { ...current, ...patch };
     set({ settings: next });
-    void applySettings(next).catch((err) => console.error("apply_settings failed", err));
+    // Optimistic: roll back to the last-persisted snapshot if the write fails,
+    // so the UI never shows a value the backend never stored.
+    void applySettings(next).catch((err) => {
+      console.error("apply_settings failed", err);
+      set({ settings: current });
+    });
   },
 }));
