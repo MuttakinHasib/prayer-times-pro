@@ -1,11 +1,15 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import type { PrayerInstant, PrayerState } from "../../lib/ipc";
 import { clock } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import { PRAYER_NAMES } from "../../components/icons";
 
+interface PrayerListProps {
+  state: PrayerState;
+}
+
 /** Today's times: past dimmed to tertiary, the next one a gold-tinted card. */
-export const PrayerList = ({ state }: { state: PrayerState }) => {
+export const PrayerList = memo(({ state }: PrayerListProps) => {
   const { times, next, show_ishraq, ishraq_ms } = state;
 
   // Insert the optional Ishraq row right after Sunrise.
@@ -53,4 +57,5 @@ export const PrayerList = ({ state }: { state: PrayerState }) => {
       })}
     </div>
   );
-};
+});
+PrayerList.displayName = "PrayerList";

@@ -10,7 +10,12 @@ import { PanelFooter } from "./panel-footer";
 // No outer drop-shadow here: the window is sized to the card, so a CSS shadow
 // would paint into the square corner gaps. The native NSPanel shadow handles it.
 const SHELL =
-  "w-[360px] overflow-hidden rounded-[16px] border border-white/[0.08] bg-popover text-content shadow-[inset_0_1px_0_rgba(255,255,255,.06)] backdrop-blur-[40px] backdrop-saturate-[1.4]";
+  "relative w-[360px] overflow-hidden rounded-[16px] border border-white/[0.08] text-content shadow-[inset_0_1px_0_rgba(255,255,255,.06)]";
+
+// The blur lives on its own static layer behind the content. WKWebView re-rasterizes
+// a backdrop-filter whenever a descendant repaints, so keeping the per-second
+// countdown/ring out of this layer stops the 1 Hz flicker.
+const BACKDROP = "pointer-events-none absolute inset-0 bg-popover backdrop-blur-[40px] backdrop-saturate-[1.4]";
 
 /** The menu-bar dropdown: a dark glass card composed of header / list / summary / footer. */
 export const Panel = () => {
@@ -22,17 +27,26 @@ export const Panel = () => {
     return initPrayerStore();
   }, []);
 
-  if (!state) return <div ref={ref} className={cn(SHELL, "min-h-[200px]")} />;
+  if (!state) {
+    return (
+      <div ref={ref} className={cn(SHELL, "min-h-[200px]")}>
+        <div className={BACKDROP} aria-hidden />
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className={SHELL}>
-      <PanelHeader state={state} />
-      <div className="h-px bg-divider" />
-      <PrayerList state={state} />
-      <div className="h-px bg-divider" />
-      <PanelSummary state={state} />
-      <div className="h-px bg-divider" />
-      <PanelFooter />
+      <div className={BACKDROP} aria-hidden />
+      <div className="relative">
+        <PanelHeader state={state} />
+        <div className="h-px bg-divider" />
+        <PrayerList state={state} />
+        <div className="h-px bg-divider" />
+        <PanelSummary state={state} />
+        <div className="h-px bg-divider" />
+        <PanelFooter />
+      </div>
     </div>
   );
 };

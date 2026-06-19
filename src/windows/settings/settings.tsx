@@ -37,7 +37,7 @@ export const Settings = () => {
   const active = TABS.find((t) => t.id === tabId) ?? TABS[0];
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-bg text-content">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-bg text-content">
       <nav className="flex gap-1 border-b border-border px-3 py-2">
         {TABS.map(({ id, label, Icon }) => (
           <button
@@ -45,10 +45,10 @@ export const Settings = () => {
             type="button"
             onClick={() => setTabId(id)}
             className={cn(
-              "flex flex-1 flex-col items-center gap-1 rounded-md px-2 py-1.5 text-[11px]",
+              "flex flex-1 flex-col items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] transition-colors",
               id === tabId
-                ? "bg-accent/20 text-accent-emphasis"
-                : "text-content-muted hover:bg-white/5",
+                ? "bg-accent-soft text-accent"
+                : "text-content-muted hover:bg-surface-hover hover:text-content",
             )}
           >
             <Icon size={18} />
@@ -57,7 +57,7 @@ export const Settings = () => {
         ))}
       </nav>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4">
+      <div className="flex-1 overflow-y-auto px-[30px] py-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {settings && <active.Body settings={settings} update={update} />}
       </div>
     </div>
