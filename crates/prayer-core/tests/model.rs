@@ -1,6 +1,5 @@
 //! Value-type model logic: next/current prayer selection, ordering, and sound
-//! metadata. Ported from PrayerKit `ModelTests` (the `AppSettings` cases land in
-//! the M3 settings port).
+//! metadata. (The `AppSettings` cases land with the M3 settings work.)
 
 use std::collections::BTreeMap;
 

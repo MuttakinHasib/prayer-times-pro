@@ -26,9 +26,8 @@ impl NotificationSound {
     /// Bundled short clip filename used for the notification sound, or `None`
     /// for `None`/`SystemDefault`.
     ///
-    /// NOTE: filenames carry `.caf` to match the macOS source verbatim; the
-    /// Tauri rebuild re-encodes the shipped assets to a portable format (see the
-    /// M4 audio work) — update these when the asset pipeline lands.
+    /// NOTE: these `.caf` names are placeholders; the M4 audio work re-encodes the
+    /// clips to a portable format — update them when the asset pipeline lands.
     pub fn notification_clip_file_name(self) -> Option<&'static str> {
         match self {
             NotificationSound::None | NotificationSound::SystemDefault => None,
