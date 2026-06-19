@@ -2,7 +2,7 @@ import { memo, useMemo } from "react";
 import type { PrayerInstant, PrayerState } from "../../lib/ipc";
 import { clock } from "../../lib/format";
 import { cn } from "../../lib/cn";
-import { PRAYER_NAMES } from "../../components/icons";
+import { PRAYER_NAMES, PrayerIcon } from "../../components/icons";
 
 interface PrayerListProps {
   state: PrayerState;
@@ -30,12 +30,22 @@ export const PrayerList = memo(({ state }: PrayerListProps) => {
           <div
             key={`${p.prayer}-${p.at_ms}`}
             className={cn(
-              "flex items-center justify-between rounded-lg px-2",
+              "flex items-center gap-2.5 rounded-lg px-2",
               isNext ? "border border-accent-ring bg-accent-soft py-[9px]" : "py-2",
             )}
           >
+            <PrayerIcon
+              prayer={p.prayer}
+              size={16}
+              strokeWidth={1.75}
+              className={cn("shrink-0", {
+                "text-accent": isNext,
+                "text-content-subtle": isPast,
+                "text-content-muted": !isNext && !isPast,
+              })}
+            />
             <span
-              className={cn("text-[13.5px]", {
+              className={cn("flex-1 text-[13.5px]", {
                 "font-semibold text-content": isNext,
                 "text-content-subtle": isPast,
                 "text-content": !isNext && !isPast,
