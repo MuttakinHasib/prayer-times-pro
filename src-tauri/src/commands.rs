@@ -66,10 +66,15 @@ pub fn apply_settings(app: AppHandle, clock: tauri::State<'_, SharedClock>, sett
     let _ = app.emit(STATE_EVENT, snapshot);
 }
 
-/// M2 stub — fleshed out in M9 (updater).
+/// Open (or focus) the settings window, dismissing the panel first.
 #[tauri::command]
 pub fn open_settings(app: AppHandle) {
-    let _ = app.emit("prayer://open-settings-requested", ());
+    panel::hide_all(&app);
+    if let Some(win) = app.get_webview_window(crate::SETTINGS_LABEL) {
+        let _ = win.show();
+        let _ = win.unminimize();
+        let _ = win.set_focus();
+    }
 }
 
 #[tauri::command]

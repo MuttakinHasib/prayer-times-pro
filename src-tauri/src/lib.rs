@@ -15,6 +15,7 @@ use tauri::Manager;
 
 pub(crate) const PANEL_LABEL: &str = "panel";
 pub(crate) const BACKDROP_LABEL: &str = "backdrop";
+pub(crate) const SETTINGS_LABEL: &str = "settings";
 pub(crate) const TRAY_ID: &str = "tray";
 pub(crate) const STATE_EVENT: &str = "prayer://state-changed";
 pub(crate) const PANEL_W: f64 = 312.0;
@@ -56,10 +57,34 @@ pub fn run() {
 
             panel::build(app.handle())?;
             panel::build_backdrop(app.handle())?;
+            build_settings_window(app.handle())?;
             tray::build(app.handle())?;
             tray::spawn_tick_loop(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+/// The standard (decorated) settings window. Created hidden; shown by the
+/// `open_settings` command. Closing hides it rather than destroying it, so it can
+/// be reopened.
+fn build_settings_window(app: &tauri::AppHandle) -> tauri::Result<()> {
+    use tauri::{WebviewUrl, WebviewWindowBuilder, WindowEvent};
+
+    let win = WebviewWindowBuilder::new(app, SETTINGS_LABEL, WebviewUrl::App("index.html".into()))
+        .title("Prayer Times")
+        .inner_size(600.0, 660.0)
+        .resizable(false)
+        .maximizable(false)
+        .visible(false)
+        .build()?;
+
+    win.clone().on_window_event(move |event| {
+        if let WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+            let _ = win.hide();
+        }
+    });
+    Ok(())
 }

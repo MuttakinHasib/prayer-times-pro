@@ -1,0 +1,77 @@
+import type { AppSettings, MenuBarStyle, MenuBarCountdownMode } from "../../../lib/settings";
+import { Note, Row, Section, SelectField, Toggle } from "../controls";
+
+interface Props {
+  settings: AppSettings;
+  update: (patch: Partial<AppSettings>) => void;
+}
+
+const STYLE_OPTIONS: { value: MenuBarStyle; label: string }[] = [
+  { value: "iconOnly", label: "Icon only" },
+  { value: "countdownOnly", label: "Countdown only" },
+  { value: "iconCountdown", label: "Icon + countdown" },
+  { value: "nextPrayerCountdown", label: "Name + countdown" },
+  { value: "iconNameCountdown", label: "Icon + name + countdown" },
+  { value: "nextPrayerClock", label: "Name + time" },
+  { value: "iconNameClock", label: "Icon + name + time" },
+];
+
+const COUNTDOWN_OPTIONS: { value: MenuBarCountdownMode; label: string }[] = [
+  { value: "nextPrayer", label: "Next prayer" },
+  { value: "currentWaqt", label: "Time left in current prayer" },
+];
+
+export const GeneralTab = ({ settings, update }: Props) => (
+  <>
+    <Section title="Startup">
+      <Row label="Launch at login">
+        <Toggle
+          checked={settings.launchAtLogin}
+          onChange={(launchAtLogin) => update({ launchAtLogin })}
+        />
+      </Row>
+    </Section>
+
+    <Section title="Menu bar">
+      <Row label="Label style">
+        <SelectField
+          value={settings.menuBarStyle}
+          options={STYLE_OPTIONS}
+          onChange={(menuBarStyle) => update({ menuBarStyle })}
+        />
+      </Row>
+      <Row label="Countdown shows">
+        <SelectField
+          value={settings.menuBarCountdownMode}
+          options={COUNTDOWN_OPTIONS}
+          onChange={(menuBarCountdownMode) => update({ menuBarCountdownMode })}
+        />
+      </Row>
+    </Section>
+
+    <Section title="Panel">
+      <Row label="Show Ishraq time">
+        <Toggle
+          checked={settings.showIshraqTime}
+          onChange={(showIshraqTime) => update({ showIshraqTime })}
+        />
+      </Row>
+      <Row label="Show Hijri date">
+        <Toggle
+          checked={settings.showHijriDate}
+          onChange={(showHijriDate) => update({ showHijriDate })}
+        />
+      </Row>
+    </Section>
+
+    <Section title="Updates">
+      <Row label="Check for updates automatically">
+        <Toggle
+          checked={settings.autoUpdateEnabled}
+          onChange={(autoUpdateEnabled) => update({ autoUpdateEnabled })}
+        />
+      </Row>
+    </Section>
+    <Note>Auto-update lands in a later milestone; the preference is saved now.</Note>
+  </>
+);
