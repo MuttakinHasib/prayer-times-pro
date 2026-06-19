@@ -18,7 +18,7 @@ import "./index.css";
 // One Vite bundle, multiple Tauri webview windows routed by label. M2 ships the
 // panel + a click-catching backdrop; settings/focus/onboarding join later.
 const rootFor = (label: string) => {
-  if (label.startsWith("focus")) return <Focus />;
+  if (label.startsWith("focus-overlay")) return <Focus />;
   switch (label) {
     case "backdrop":
       return <Backdrop />;

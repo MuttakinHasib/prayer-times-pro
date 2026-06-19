@@ -8,11 +8,17 @@ use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindo
 use crate::scheduler::FocusCue;
 use crate::PANEL_LABEL;
 
-pub const FOCUS_LABEL: &str = "focus";
+/// Label prefix for the overlay windows — specific so `dismiss` only ever hides
+/// overlays, never some future focus-related window.
+const OVERLAY_PREFIX: &str = "focus-overlay-";
 /// Carries the [`FocusCue`] to every overlay webview when Focus Mode engages.
 pub const ENGAGE_EVENT: &str = "focus://engage";
 /// Tells all overlays to clear their countdowns when one of them is dismissed.
 pub const DISMISS_EVENT: &str = "focus://dismiss";
+
+fn overlay_label(index: usize) -> String {
+    format!("{OVERLAY_PREFIX}{index}")
+}
 
 /// Monitors, queried through the panel window (windows are the monitor source).
 fn monitors(app: &AppHandle) -> Vec<tauri::Monitor> {
@@ -26,7 +32,7 @@ fn monitors(app: &AppHandle) -> Vec<tauri::Monitor> {
 pub fn build_all(app: &AppHandle) -> tauri::Result<()> {
     let count = monitors(app).len().max(1);
     for i in 0..count {
-        build_overlay(app, &format!("{FOCUS_LABEL}-{i}"))?;
+        build_overlay(app, &overlay_label(i))?;
     }
     Ok(())
 }
@@ -59,7 +65,7 @@ fn build_overlay(app: &AppHandle, label: &str) -> tauri::Result<()> {
 pub fn engage(app: &AppHandle, cue: &FocusCue) {
     let mons = monitors(app);
     for (i, mon) in mons.iter().enumerate() {
-        if let Some(win) = app.get_webview_window(&format!("{FOCUS_LABEL}-{i}")) {
+        if let Some(win) = app.get_webview_window(&overlay_label(i)) {
             let _ = win.set_position(*mon.position());
             let _ = win.set_size(*mon.size());
             let _ = win.show();
@@ -67,7 +73,12 @@ pub fn engage(app: &AppHandle, cue: &FocusCue) {
         }
     }
     if mons.is_empty() {
-        if let Some(win) = app.get_webview_window(&format!("{FOCUS_LABEL}-0")) {
+        if let Some(win) = app.get_webview_window(&overlay_label(0)) {
+            // Size to the primary monitor so the fallback still covers the screen.
+            if let Ok(Some(mon)) = win.primary_monitor() {
+                let _ = win.set_position(*mon.position());
+                let _ = win.set_size(*mon.size());
+            }
             let _ = win.show();
             let _ = win.set_focus();
         }
@@ -78,7 +89,7 @@ pub fn engage(app: &AppHandle, cue: &FocusCue) {
 /// Hide every overlay and tell them to clear their countdowns.
 pub fn dismiss(app: &AppHandle) {
     for (label, win) in app.webview_windows() {
-        if label.starts_with(FOCUS_LABEL) {
+        if label.starts_with(OVERLAY_PREFIX) {
             let _ = win.hide();
         }
     }
