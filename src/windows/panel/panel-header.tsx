@@ -25,28 +25,28 @@ export const PanelHeader = memo(({ state }: PanelHeaderProps) => {
   }, [times, next, now_ms]);
 
   return (
-    <div className="px-[22px] pb-[18px] pt-[22px]">
-      <div className="font-mono text-[10.5px] font-semibold tracking-[0.16em] text-content-subtle">
+    <div className="px-[18px] pb-3.5 pt-[18px]">
+      <div className="font-mono text-[10px] font-semibold tracking-[0.16em] text-content-subtle">
         {dateEyebrow(now_ms, tz)}
       </div>
       {show_hijri && (
-        <div className="mt-1.5 text-[12px] text-content-muted">
+        <div className="mt-1 text-[11.5px] text-content-muted">
           {hijriDate({ ms: now_ms, tz, adjustmentDays: hijri_adjustment })}
         </div>
       )}
 
       {next && (
-        <div className="mt-[18px] flex items-center gap-[18px]">
-          <PrayerRing fromMs={fromMs} toMs={next.at_ms} size={64} />
+        <div className="mt-3.5 flex items-center gap-3.5">
+          <PrayerRing prayer={next.prayer} fromMs={fromMs} toMs={next.at_ms} size={52} />
           <div className="min-w-0">
-            <div className="text-[13px] text-content-muted">
+            <div className="text-[12px] text-content-muted">
               Up next · {PRAYER_NAMES[next.prayer] ?? next.prayer}
             </div>
-            <div className="whitespace-nowrap font-display text-[32px] leading-none text-content">
+            <div className="whitespace-nowrap font-display text-[27px] leading-none text-content">
               <LiveCountdown targetMs={next.at_ms} variant="long" className="tabular-nums" />
-              <span className="text-[15px] text-content-muted"> remaining</span>
+              <span className="text-[13px] text-content-muted"> remaining</span>
             </div>
-            <div className="mt-1 text-[13px] text-accent">{clock(next.at_ms, tz)}</div>
+            <div className="mt-1 text-[12.5px] text-accent">{clock(next.at_ms, tz)}</div>
           </div>
         </div>
       )}

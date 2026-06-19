@@ -10,7 +10,7 @@ import { PanelFooter } from "./panel-footer";
 // No outer drop-shadow here: the window is sized to the card, so a CSS shadow
 // would paint into the square corner gaps. The native NSPanel shadow handles it.
 const SHELL =
-  "relative w-[360px] overflow-hidden rounded-[16px] border border-white/[0.08] text-content shadow-[inset_0_1px_0_rgba(255,255,255,.06)]";
+  "relative w-[336px] overflow-hidden rounded-[16px] border border-white/[0.08] text-content shadow-[inset_0_1px_0_rgba(255,255,255,.06)]";
 
 // The blur lives on its own static layer behind the content. WKWebView re-rasterizes
 // a backdrop-filter whenever a descendant repaints, so keeping the per-second

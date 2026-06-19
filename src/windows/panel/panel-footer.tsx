@@ -3,7 +3,7 @@ import { checkForUpdates, hidePanel, openSettings, quitApp } from "../../lib/ipc
 
 /** Settings / Check for Updates / Quit actions with mono shortcut hints. */
 export const PanelFooter = memo(() => (
-  <div className="flex flex-col px-3 pb-3 pt-1.5">
+  <div className="flex flex-col px-2.5 pb-2.5 pt-1">
     <FooterButton shortcut="⌘," onClick={() => openSettings().then(hidePanel)}>
       Settings
     </FooterButton>
@@ -25,7 +25,7 @@ const FooterButton = ({ shortcut, children, onClick }: FooterButtonProps) => (
   <button
     type="button"
     onClick={onClick}
-    className="flex w-full items-center rounded-lg px-2.5 py-[9px] text-left text-[13px] text-content hover:bg-surface-hover"
+    className="flex w-full items-center rounded-lg px-2.5 py-2 text-left text-[12.5px] text-content hover:bg-surface-hover"
   >
     {children}
     {shortcut && (
