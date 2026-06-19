@@ -57,7 +57,7 @@ export const Settings = () => {
         ))}
       </nav>
 
-      <div className="flex-1 overflow-y-auto px-[30px] py-6 [scrollbar-gutter:stable]">
+      <div className="flex-1 overflow-y-auto px-[30px] py-6">
         {settings && <active.Body settings={settings} update={update} />}
       </div>
     </div>
