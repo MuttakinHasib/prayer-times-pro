@@ -150,10 +150,18 @@
     background: transparent;
     overflow: hidden;
     font-family: var(--font-sans);
+    /* UI text sits at medium — the design leans on 500/600, and the webview's
+       grayscale smoothing renders 400 lighter than the mockups. */
+    font-weight: 500;
     color: var(--c-content);
     -webkit-user-select: none;
     user-select: none;
     cursor: default;
+  }
+
+  /* Newsreader display text stays at its book weight (explicit utilities win). */
+  .font-display {
+    font-weight: 400;
   }
 
   /* Menu-bar popover: no focus rings (the panel auto-focuses a button on show). */

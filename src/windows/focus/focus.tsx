@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Clock } from "lucide-react";
 import {
   dismissFocus,
   engageFocus,
@@ -170,17 +169,15 @@ export const Focus = () => {
         <button
           type="button"
           onClick={dismiss}
-          className="flex items-center justify-center gap-2 rounded-[13px] bg-accent px-7 py-3 text-[15px] font-semibold text-accent-on shadow-[0_10px_34px_-8px_rgba(200,169,104,.55)] transition-all hover:bg-accent-emphasis hover:shadow-[0_14px_40px_-8px_rgba(200,169,104,.7)] active:scale-[0.98]"
+          className="rounded-[10px] bg-accent px-7 py-3 text-[14px] font-semibold text-accent-on transition-colors hover:bg-accent-emphasis"
         >
-          <Check size={17} strokeWidth={2.75} />
           I've prayed
         </button>
         <button
           type="button"
           onClick={onSnooze}
-          className="flex items-center justify-center gap-2 rounded-[13px] border border-white/12 px-6 py-3 text-[13.5px] text-content-muted transition-all hover:border-white/25 hover:bg-white/[0.04] hover:text-content active:scale-[0.98]"
+          className="rounded-[10px] border border-border px-6 py-3 text-[14px] text-content-muted transition-colors hover:border-content-subtle hover:text-content"
         >
-          <Clock size={15} />
           Snooze 10 min
         </button>
       </div>
