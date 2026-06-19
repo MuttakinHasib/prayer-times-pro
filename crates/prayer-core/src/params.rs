@@ -62,7 +62,7 @@ fn default_high_latitude_rule() -> HighLatitudeRule {
 }
 
 impl CalculationParameters {
-    /// Builder mirroring the Swift memberwise init with the same defaults.
+    /// Construct with sensible defaults, overriding only what a method needs.
     pub fn new(fajr_angle: f64) -> Self {
         Self {
             fajr_angle,

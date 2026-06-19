@@ -53,9 +53,8 @@ pub fn calculate(
         .earliest()
         .unwrap_or_else(|| tz.from_utc_datetime(&naive_midnight));
 
-    // The UTC offset at local midnight, in hours — matching the Swift engine's
-    // `secondsFromGMT(for: midnight)`. Sampling at midnight (not noon) keeps
-    // DST-transition behaviour identical to the reference implementation.
+    // The UTC offset at local midnight, in hours. Sampling at midnight (not noon)
+    // keeps DST-transition days correct.
     let tz_hours = midnight.offset().fix().local_minus_utc() as f64 / 3600.0;
 
     let jd0 = solar::julian_date(year, month, day as f64);

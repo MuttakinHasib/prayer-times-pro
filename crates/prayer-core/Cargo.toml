@@ -2,11 +2,11 @@
 name = "prayer-core"
 version = "0.1.0"
 edition = "2021"
-description = "Pure Islamic prayer-time calculation engine (no UI/IO). Ported from PrayerKit."
+description = "Pure Islamic prayer-time calculation engine (no UI/IO)."
 license = "MIT"
 
 # PURE core: serde + chrono only. No tauri / objc2 / rodio / tokio here — keeps the
-# golden-table accuracy gate fast and portable, mirroring the Swift PrayerKit split.
+# golden-table accuracy gate fast and portable.
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "clock", "serde"] }

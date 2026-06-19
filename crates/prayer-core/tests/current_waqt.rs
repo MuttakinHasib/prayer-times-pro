@@ -1,5 +1,5 @@
 //! Verifies the "current prayer window" resolver that drives the time-left
-//! countdown. Ported from PrayerKit `CurrentWaqtTests`.
+//! countdown.
 
 use std::collections::BTreeMap;
 

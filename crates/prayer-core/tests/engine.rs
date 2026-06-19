@@ -1,5 +1,5 @@
 //! Validates the astronomical core against independently verifiable data and the
-//! method-specific offset handling. Ported from PrayerKit `EngineTests`.
+//! method-specific offset handling.
 
 mod common;
 

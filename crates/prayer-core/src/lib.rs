@@ -1,5 +1,4 @@
-//! Pure Islamic prayer-time calculation core, ported faithfully from the Swift
-//! `PrayerKit` package.
+//! Pure Islamic prayer-time calculation core.
 //!
 //! Design rule (do not violate): this crate is a *generic astronomical
 //! calculator*. Everything Islam-specific (twilight angles, shadow factors,

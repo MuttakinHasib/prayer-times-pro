@@ -1,6 +1,5 @@
 //! Verifies each adapter emits the prescribed parameters, and that the registry
-//! resolves ids, the Hanafi modifier, and country mappings. Ported from
-//! PrayerKit `AdapterTests`.
+//! resolves ids, the Hanafi modifier, and country mappings.
 
 use prayer_core::{
     CalculationMethodAdapter, CalculationParameters, Coordinates, DiyanetAdapter, EgyptianAdapter,
