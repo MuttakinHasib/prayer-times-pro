@@ -38,7 +38,7 @@ export const PanelHeader = ({ state }: { state: PrayerState }) => {
             <div className="text-[13px] text-content-muted">
               Up next · {PRAYER_NAMES[next.prayer] ?? next.prayer}
             </div>
-            <div className="font-display text-[32px] leading-none text-content">
+            <div className="whitespace-nowrap font-display text-[32px] leading-none text-content">
               <LiveCountdown targetMs={next.at_ms} variant="long" className="tabular-nums" />
               <span className="text-[15px] text-content-muted"> remaining</span>
             </div>

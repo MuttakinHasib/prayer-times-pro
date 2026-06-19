@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState } from "react";
+import { memo, useCallback, useEffect, useId, useState } from "react";
 
 const TICK_MS = 1000;
 /** Inner disc inset and crescent size, as fractions of the ring diameter. */
@@ -6,25 +6,36 @@ const INNER_INSET_PX = 12;
 const CRESCENT_RATIO = 0.22;
 const FULL_TURN_DEG = 360;
 
-/** Fraction 0–1 of the current→next window elapsed, re-evaluated each second. */
-const useProgress = (fromMs: number, toMs: number): number => {
-  const frac = useCallback(() => {
+/**
+ * Whole-degree progress (0–360) of the current→next window, re-evaluated each
+ * second. State holds the rounded degree, so a tick that doesn't move the arc a
+ * full degree bails out of `setState` — the ring re-renders ~once per ≈15 s, not
+ * every second.
+ */
+const useRingDegrees = (fromMs: number, toMs: number): number => {
+  const compute = useCallback(() => {
     const span = toMs - fromMs;
-    if (span <= 0) return 1;
-    return Math.min(1, Math.max(0, (Date.now() - fromMs) / span));
+    const frac = span <= 0 ? 1 : Math.min(1, Math.max(0, (Date.now() - fromMs) / span));
+    return Math.round(FULL_TURN_DEG * frac);
   }, [fromMs, toMs]);
 
-  const [value, setValue] = useState(frac);
+  const [deg, setDeg] = useState(compute);
   useEffect(() => {
-    setValue(frac());
-    const id = setInterval(() => setValue(frac()), TICK_MS);
+    setDeg(compute());
+    const id = setInterval(() => {
+      // Returning the previous value (same reference) makes React skip the render.
+      setDeg((prev) => {
+        const next = compute();
+        return next === prev ? prev : next;
+      });
+    }, TICK_MS);
     return () => clearInterval(id);
-  }, [frac]);
-  return value;
+  }, [compute]);
+  return deg;
 };
 
-/** A small gold crescent built from two offset circles. */
-const Crescent = ({ size }: { size: number }) => {
+/** A small gold crescent built from two offset circles (static — memoized). */
+const Crescent = memo(({ size }: { size: number }) => {
   const id = useId().replace(/:/g, "");
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
@@ -38,7 +49,7 @@ const Crescent = ({ size }: { size: number }) => {
       <rect width="100" height="100" fill="var(--c-accent)" mask={`url(#crescent-${id})`} />
     </svg>
   );
-};
+});
 
 /**
  * The hero countdown ring: a conic-gradient arc tracks progress toward the next
@@ -53,7 +64,7 @@ export const PrayerRing = ({
   toMs: number;
   size?: number;
 }) => {
-  const deg = Math.round(FULL_TURN_DEG * useProgress(fromMs, toMs));
+  const deg = useRingDegrees(fromMs, toMs);
   const inner = size - INNER_INSET_PX;
   return (
     <div
@@ -62,7 +73,6 @@ export const PrayerRing = ({
         width: size,
         height: size,
         background: `conic-gradient(var(--c-accent) ${deg}deg, var(--c-elevated) 0)`,
-        transition: "background 0.6s cubic-bezier(.32,.72,0,1)",
       }}
     >
       <div
