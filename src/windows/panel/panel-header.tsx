@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import type { PrayerState } from "../../lib/ipc";
 import { clock, dateEyebrow, hijriDate } from "../../lib/format";
 import { PRAYER_NAMES } from "../../components/icons";
@@ -9,8 +9,12 @@ import { PrayerRing } from "./prayer-ring";
 // assume a 6-hour run-up so the arc still reads as nearly complete.
 const FALLBACK_WINDOW_MS = 6 * 60 * 60 * 1000;
 
+interface PanelHeaderProps {
+  state: PrayerState;
+}
+
 /** Mono date eyebrow, Hijri line, and the next-prayer hero with countdown ring. */
-export const PanelHeader = ({ state }: { state: PrayerState }) => {
+export const PanelHeader = memo(({ state }: PanelHeaderProps) => {
   const { next, times, tz, now_ms, show_hijri, hijri_adjustment } = state;
 
   // Ring window: from the most recent past time today to the next prayer.
@@ -48,4 +52,5 @@ export const PanelHeader = ({ state }: { state: PrayerState }) => {
       )}
     </div>
   );
-};
+});
+PanelHeader.displayName = "PanelHeader";

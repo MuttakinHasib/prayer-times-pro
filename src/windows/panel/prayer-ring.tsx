@@ -6,6 +6,16 @@ const INNER_INSET_PX = 12;
 const CRESCENT_RATIO = 0.22;
 const FULL_TURN_DEG = 360;
 
+interface CrescentProps {
+  size: number;
+}
+
+interface PrayerRingProps {
+  fromMs: number;
+  toMs: number;
+  size?: number;
+}
+
 /**
  * Whole-degree progress (0–360) of the current→next window, re-evaluated each
  * second. State holds the rounded degree, so a tick that doesn't move the arc a
@@ -35,7 +45,7 @@ const useRingDegrees = (fromMs: number, toMs: number): number => {
 };
 
 /** A small gold crescent built from two offset circles (static — memoized). */
-const Crescent = memo(({ size }: { size: number }) => {
+const Crescent = memo(({ size }: CrescentProps) => {
   const id = useId().replace(/:/g, "");
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
@@ -50,20 +60,13 @@ const Crescent = memo(({ size }: { size: number }) => {
     </svg>
   );
 });
+Crescent.displayName = "Crescent";
 
 /**
  * The hero countdown ring: a conic-gradient arc tracks progress toward the next
  * prayer, wrapping an inner disc with the crescent glyph.
  */
-export const PrayerRing = ({
-  fromMs,
-  toMs,
-  size = 64,
-}: {
-  fromMs: number;
-  toMs: number;
-  size?: number;
-}) => {
+export const PrayerRing = memo(({ fromMs, toMs, size = 64 }: PrayerRingProps) => {
   const deg = useRingDegrees(fromMs, toMs);
   const inner = size - INNER_INSET_PX;
   return (
@@ -83,4 +86,5 @@ export const PrayerRing = ({
       </div>
     </div>
   );
-};
+});
+PrayerRing.displayName = "PrayerRing";
