@@ -12,7 +12,7 @@ use prayer_core::{
 };
 use serde::Serialize;
 
-use crate::scheduler::NotifEvent;
+use crate::scheduler::{FocusCue, NotifEvent};
 
 /// Banners older than this (e.g. after a long sleep) are dropped rather than
 /// fired as a backlog when the tick loop catches up.
@@ -274,6 +274,11 @@ impl Clock {
         self.now.timestamp_millis()
     }
 
+    /// Display name of the next prayer (for the Focus Mode preview).
+    pub fn next_prayer_label(&self) -> String {
+        self.next_event().map(|(p, _)| prayer_name(p).to_string()).unwrap_or_else(|| "Prayer".into())
+    }
+
     /// Notification/Adhan events that came due since the previous tick. Advances
     /// the watermark every call. Empty on the first tick (no startup backlog),
     /// when the master switch is off, or for events older than the catch-up window.
@@ -307,12 +312,22 @@ fn build_events(settings: &AppSettings, prayer: Prayer, time: DateTime<Tz>) -> V
     let name = prayer_name(prayer);
     let at = time.timestamp_millis();
     let madinah = cfg.sound == NotificationSound::AdhanMadinah;
+    // Athan event also engages Focus Mode when enabled and this prayer triggers it.
+    let focus = (settings.focus_mode_enabled && settings.focus_trigger.includes(prayer)).then(
+        || FocusCue {
+            prayer: name.to_string(),
+            duration_minutes: settings.focus_duration_minutes,
+            blur: settings.focus_blur_intensity,
+            emergency_exit: settings.focus_emergency_exit_enabled,
+        },
+    );
     let mut events = vec![NotifEvent {
         fire_ms: at,
         title: name.to_string(),
         body: format!("It's time for {name}."),
         play_adhan: cfg.play_full_adhan,
         madinah,
+        focus,
     }];
 
     if cfg.early_reminder_enabled {
@@ -323,6 +338,7 @@ fn build_events(settings: &AppSettings, prayer: Prayer, time: DateTime<Tz>) -> V
             body: format!("{name} begins soon."),
             play_adhan: false,
             madinah,
+            focus: None,
         });
     }
 
@@ -333,6 +349,7 @@ fn build_events(settings: &AppSettings, prayer: Prayer, time: DateTime<Tz>) -> V
             body: format!("Jamaat for {name}."),
             play_adhan: false,
             madinah,
+            focus: None,
         });
     }
     events

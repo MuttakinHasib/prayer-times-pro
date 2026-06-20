@@ -72,7 +72,7 @@
   --c-popover: rgba(18, 19, 22, 0.86);
 
   /* ── Typography families ── */
-  --font-display: "Newsreader", "Iowan Old Style", Palatino, Georgia, serif;
+  --font-display: "Newsreader Variable", "Iowan Old Style", Palatino, Georgia, serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
     system-ui, "Noto Sans Bengali", "Amiri", sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", "JetBrains Mono",
@@ -150,10 +150,20 @@
     background: transparent;
     overflow: hidden;
     font-family: var(--font-sans);
+    /* UI text sits at medium — the design leans on 500/600, and the webview's
+       grayscale smoothing renders 400 lighter than the mockups. */
+    font-weight: 500;
+    /* Newsreader is variable — let it adjust stroke weight to the display size. */
+    font-optical-sizing: auto;
     color: var(--c-content);
     -webkit-user-select: none;
     user-select: none;
     cursor: default;
+  }
+
+  /* Newsreader display text stays at its book weight (explicit utilities win). */
+  .font-display {
+    font-weight: 400;
   }
 
   /* Menu-bar popover: no focus rings (the panel auto-focuses a button on show). */

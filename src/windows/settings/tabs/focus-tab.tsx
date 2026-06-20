@@ -1,4 +1,5 @@
 import type { AppSettings, FocusBlurIntensity, FocusTrigger } from "../../../lib/settings";
+import { engageFocus } from "../../../lib/ipc";
 import { Note, Row, Section, SelectField, Stepper, Toggle } from "../controls";
 
 interface Props {
@@ -60,7 +61,19 @@ export const FocusTab = ({ settings, update }: Props) => (
           onChange={(focusEmergencyExitEnabled) => update({ focusEmergencyExitEnabled })}
         />
       </Row>
+      <Row label="Try it" sublabel="Preview the overlay with the next prayer.">
+        <button
+          type="button"
+          onClick={() => void engageFocus()}
+          className="rounded-md border border-border px-3 py-1 text-[12.5px] font-medium text-content transition-colors hover:bg-surface-hover"
+        >
+          Preview
+        </button>
+      </Row>
     </Section>
-    <Note>Focus Mode is a discipline aid, not a lock. The screen cover lands in a later milestone.</Note>
+    <Note>
+      Focus Mode is a discipline aid, not a lock — "I've prayed" always exits, and Force Quit always
+      works.
+    </Note>
   </>
 );

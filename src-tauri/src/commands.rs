@@ -89,6 +89,29 @@ pub fn stop_adhan(app: AppHandle, audio: tauri::State<'_, crate::audio::Audio>) 
     let _ = app.emit(crate::scheduler::ADHAN_EVENT, false);
 }
 
+/// Engage Focus Mode. `prayer` names the prayer (Snooze re-engages the same one);
+/// `None` uses the next prayer (the settings "Try it" preview).
+#[tauri::command]
+pub fn engage_focus(app: AppHandle, clock: tauri::State<'_, SharedClock>, prayer: Option<String>) {
+    let cue = {
+        let c = clock.lock().unwrap_or_else(PoisonError::into_inner);
+        let s = c.settings();
+        crate::scheduler::FocusCue {
+            prayer: prayer.unwrap_or_else(|| c.next_prayer_label()),
+            duration_minutes: s.focus_duration_minutes,
+            blur: s.focus_blur_intensity,
+            emergency_exit: s.focus_emergency_exit_enabled,
+        }
+    };
+    crate::focus::engage(&app, &cue);
+}
+
+/// Dismiss the Focus Mode overlay ("I've prayed", Esc, or the duration elapsed).
+#[tauri::command]
+pub fn dismiss_focus(app: AppHandle) {
+    crate::focus::dismiss(&app);
+}
+
 /// Detect the location from IP, fill coordinates + timezone (+ method when
 /// auto-detect is on), persist, recompute, and return the updated settings.
 #[tauri::command]

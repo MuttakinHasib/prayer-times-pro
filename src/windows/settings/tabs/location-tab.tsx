@@ -85,7 +85,7 @@ export const LocationTab = ({ settings, update }: Props) => {
               type="button"
               onClick={runDetect}
               disabled={detecting}
-              className="rounded-md bg-accent px-3 py-1 text-[12.5px] font-medium text-accent-on transition-colors hover:bg-accent-emphasis disabled:opacity-50"
+              className="rounded-md bg-accent px-3 py-1 text-[12.5px] font-semibold text-accent-on transition-colors hover:bg-accent-emphasis disabled:opacity-50"
             >
               {detecting ? "Detecting…" : "Detect location"}
             </button>

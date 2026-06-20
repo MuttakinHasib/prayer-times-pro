@@ -5,6 +5,7 @@
       "name": "prayer-times-pro",
       "dependencies": {
         "@fontsource-variable/jetbrains-mono": "^5.2.8",
+        "@fontsource-variable/newsreader": "^5.2.10",
         "@fontsource/amiri": "^5.2.8",
         "@fontsource/newsreader": "^5.2.10",
         "@fontsource/noto-sans-bengali": "^5.2.11",
@@ -38,6 +39,8 @@
     "@emnapi/wasi-threads": ["@emnapi/wasi-threads@1.2.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w=="],
 
     "@fontsource-variable/jetbrains-mono": ["@fontsource-variable/jetbrains-mono@5.2.8", "", {}, "sha512-WBA9elru6Jdp5df2mES55wuOO0WIrn3kpXnI4+W2ek5u3ZgLS9XS4gmIlcQhiZOWEKl95meYdvK7xI+ETLCq/Q=="],
+
+    "@fontsource-variable/newsreader": ["@fontsource-variable/newsreader@5.2.10", "", {}, "sha512-MdI2iRwrqWpMOU/2aV2BgfZ4dJNlj/XlYaY8Zb7t87mWqHskYW0XiUANkt1cyOCiEfW2VQ0bQ5vZgGPp6B2B4w=="],
 
     "@fontsource/amiri": ["@fontsource/amiri@5.2.8", "", {}, "sha512-HT/wBlEC/ummjXWg5yH+V0Tzw1vITtI9UM8mwxhwOkNZWD2zuie5vXpAVSCZORArT/LUQ4NP0fRcjiElUwI/8A=="],
 
