@@ -20,7 +20,6 @@ use tauri::Manager;
 pub(crate) const PANEL_LABEL: &str = "panel";
 pub(crate) const BACKDROP_LABEL: &str = "backdrop";
 pub(crate) const SETTINGS_LABEL: &str = "settings";
-pub(crate) const MAIN_LABEL: &str = "main";
 pub(crate) const TRAY_ID: &str = "tray";
 pub(crate) const STATE_EVENT: &str = "prayer://state-changed";
 pub(crate) const PANEL_W: f64 = 336.0;
@@ -54,7 +53,6 @@ pub fn run() {
             commands::detect_location,
             commands::engage_focus,
             commands::dismiss_focus,
-            commands::open_main,
         ])
         .setup(|app| {
             // Menu-bar agent: no Dock icon on macOS.
@@ -81,7 +79,6 @@ pub fn run() {
             panel::build(app.handle())?;
             panel::build_backdrop(app.handle())?;
             build_settings_window(app.handle())?;
-            build_main_window(app.handle())?;
             focus::build_all(app.handle())?;
             tray::build(app.handle())?;
             tray::spawn_tick_loop(app.handle().clone());
@@ -114,23 +111,3 @@ fn build_settings_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// The main "Today" dashboard window. Created hidden; shown by `open_main` (the
-/// panel's "Open Prayer Times"). Closing hides it so it can be reopened.
-fn build_main_window(app: &tauri::AppHandle) -> tauri::Result<()> {
-    use tauri::{WebviewUrl, WebviewWindowBuilder, WindowEvent};
-
-    let win = WebviewWindowBuilder::new(app, MAIN_LABEL, WebviewUrl::App("index.html".into()))
-        .title("Prayer Times")
-        .inner_size(980.0, 660.0)
-        .min_inner_size(820.0, 560.0)
-        .visible(false)
-        .build()?;
-
-    win.clone().on_window_event(move |event| {
-        if let WindowEvent::CloseRequested { api, .. } = event {
-            api.prevent_close();
-            let _ = win.hide();
-        }
-    });
-    Ok(())
-}
