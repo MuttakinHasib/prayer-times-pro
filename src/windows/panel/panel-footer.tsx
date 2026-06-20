@@ -1,9 +1,12 @@
 import { memo, type ReactNode } from "react";
-import { checkForUpdates, hidePanel, openSettings, quitApp } from "../../lib/ipc";
+import { checkForUpdates, hidePanel, openMain, openSettings, quitApp } from "../../lib/ipc";
 
-/** Settings / Check for Updates / Quit actions with mono shortcut hints. */
+/** Open Prayer Times / Settings / Check for Updates / Quit, with mono shortcut hints. */
 export const PanelFooter = memo(() => (
   <div className="flex flex-col px-2.5 pb-2.5 pt-1">
+    <FooterButton shortcut="⌘O" onClick={() => openMain().then(hidePanel)}>
+      Open Prayer Times
+    </FooterButton>
     <FooterButton shortcut="⌘," onClick={() => openSettings().then(hidePanel)}>
       Settings
     </FooterButton>

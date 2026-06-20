@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Core capabilities for the panel window (M2: tray + panel + state events)",
-  "windows": ["panel", "backdrop", "settings", "focus-*", "onboarding"],
+  "windows": ["panel", "backdrop", "settings", "main", "focus-*", "onboarding"],
   "permissions": [
     "core:default",
     "core:event:default",
