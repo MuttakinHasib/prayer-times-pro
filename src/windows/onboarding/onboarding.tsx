@@ -131,9 +131,10 @@ const LocationStep = ({ onNext }: { onNext: () => void }) => {
   return (
     <>
       <Glyph />
-      <h1 className="font-display text-[36px] leading-[1.15]">
+      <p className="font-display text-[20px] italic leading-tight text-content-muted">
         Assalāmu ʿalaykum.
-        <br />
+      </p>
+      <h1 className="mt-2 font-display text-[42px] leading-[1.1] tracking-[-0.01em] text-content">
         Let's find your times.
       </h1>
       <p className="mt-4 max-w-[360px] text-[15px] leading-relaxed text-content-muted">
