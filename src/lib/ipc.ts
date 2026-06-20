@@ -39,6 +39,7 @@ export const reportContentSize = (width: number, height: number) =>
   invoke<void>("report_content_size", { width, height });
 export const quitApp = () => invoke<void>("quit_app");
 export const openSettings = () => invoke<void>("open_settings");
+export const openMain = () => invoke<void>("open_main");
 export const checkForUpdates = () => invoke<void>("check_for_updates");
 export const stopAdhan = () => invoke<void>("stop_adhan");
 
