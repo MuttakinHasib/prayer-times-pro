@@ -131,12 +131,10 @@ const LocationStep = ({ onNext }: { onNext: () => void }) => {
   return (
     <>
       <Glyph />
-      <p className="font-display text-[20px] italic leading-tight text-content-muted">
-        Assalāmu ʿalaykum.
-      </p>
-      <h1 className="mt-2 font-display text-[42px] leading-[1.1] tracking-[-0.01em] text-content">
-        Let's find your times.
+      <h1 className="font-display text-[42px] leading-[1.1] tracking-[-0.01em] text-content">
+        Assalāmu <span className="italic text-accent">ʿalaykum</span>.
       </h1>
+      <p className="mt-3 text-[15px] text-content-muted">Let's find your times.</p>
       <p className="mt-4 max-w-[360px] text-[15px] leading-relaxed text-content-muted">
         We'll detect your location and set sensible defaults. You'll be done in under a minute —
         everything is changeable later.
