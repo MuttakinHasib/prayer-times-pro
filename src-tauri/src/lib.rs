@@ -55,6 +55,7 @@ pub fn run() {
             commands::engage_focus,
             commands::dismiss_focus,
             commands::complete_onboarding,
+            commands::open_onboarding,
         ])
         .setup(|app| {
             // Menu-bar agent: no Dock icon on macOS.
@@ -119,9 +120,9 @@ fn build_settings_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// The first-launch onboarding wizard. Shown only when onboarding isn't complete;
-/// closed for good by `complete_onboarding`.
-fn build_onboarding_window(app: &tauri::AppHandle) -> tauri::Result<()> {
+/// The first-launch onboarding wizard. Shown on first launch and re-openable from
+/// Settings; closed for good by `complete_onboarding`.
+pub(crate) fn build_onboarding_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     use tauri::{WebviewUrl, WebviewWindowBuilder};
 
     WebviewWindowBuilder::new(app, ONBOARDING_LABEL, WebviewUrl::App("index.html".into()))
