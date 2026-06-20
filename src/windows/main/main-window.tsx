@@ -75,11 +75,11 @@ const NavRail = ({ pane, onSelect }: { pane: Pane; onSelect: (p: Pane) => void }
               : "text-content-muted hover:bg-surface-hover hover:text-content",
           )}
         >
-          {active ? (
-            <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-accent" />
-          ) : (
-            <Icon size={15} className="shrink-0" strokeWidth={1.75} />
-          )}
+          <Icon
+            size={15}
+            strokeWidth={1.75}
+            className={cn("shrink-0", { "text-accent": active })}
+          />
           {label}
         </button>
       );
