@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Bell, CalendarDays, House, Settings as Gear, Target, type LucideIcon } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { clock, dateEyebrow, hijriDate } from "../../lib/format";
 import { engageFocus, openSettings } from "../../lib/ipc";
 import type { PrayerInstant, PrayerState } from "../../lib/ipc";
 import { initPrayerStore, usePrayerStore } from "../../stores/prayer.store";
+import { useSettingsStore } from "../../stores/settings.store";
 import { PRAYER_NAMES, PrayerIcon } from "../../components/icons";
 import { AppIconTile } from "../../components/logo";
 import { LiveCountdown } from "../panel/live-countdown";
 import { PrayerRing } from "../panel/prayer-ring";
+import { NotificationsTab } from "../settings/tabs/notifications-tab";
+import { FocusTab } from "../settings/tabs/focus-tab";
 
 // Canonical display order — never sort the timeline by clock time.
 const ORDER = ["fajr", "sunrise", "ishraq", "dhuhr", "asr", "maghrib", "isha"];
@@ -37,22 +40,42 @@ const NAV: NavItem[] = [
 export const MainWindow = () => {
   const [pane, setPane] = useState<Pane>("today");
   const state = usePrayerStore((s) => s.state);
+  const settings = useSettingsStore((s) => s.settings);
+  const hydrate = useSettingsStore((s) => s.hydrate);
+  const update = useSettingsStore((s) => s.update);
 
   useEffect(() => initPrayerStore(), []);
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg text-content">
       <NavRail pane={pane} onSelect={setPane} />
       <main className="flex-1 overflow-y-auto px-10 py-9 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {pane === "today" && state ? (
-          <Today state={state} />
-        ) : (
-          <Placeholder label={NAV.find((n) => n.id === pane)?.label ?? ""} />
+        {pane === "today" && state && <Today state={state} />}
+        {pane === "schedule" && <Placeholder label="Schedule" />}
+        {pane === "notifications" && settings && (
+          <Pane title="Notifications">
+            <NotificationsTab settings={settings} update={update} />
+          </Pane>
+        )}
+        {pane === "focus" && settings && (
+          <Pane title="Focus Mode">
+            <FocusTab settings={settings} update={update} />
+          </Pane>
         )}
       </main>
     </div>
   );
 };
+
+const Pane = ({ title, children }: { title: string; children: ReactNode }) => (
+  <div className="mx-auto max-w-[640px]">
+    <h1 className="mb-7 font-display text-[26px] text-content">{title}</h1>
+    {children}
+  </div>
+);
 
 const NavRail = ({ pane, onSelect }: { pane: Pane; onSelect: (p: Pane) => void }) => (
   <nav className="flex w-[228px] shrink-0 flex-col border-r border-border bg-black/20 px-3.5 py-2">
