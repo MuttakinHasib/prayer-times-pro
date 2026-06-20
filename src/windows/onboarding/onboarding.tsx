@@ -131,8 +131,8 @@ const LocationStep = ({ onNext }: { onNext: () => void }) => {
   return (
     <>
       <Glyph />
-      <h1 className="font-display text-[40px] leading-[1.1]">
-        Salaam.
+      <h1 className="font-display text-[36px] leading-[1.15]">
+        Assalāmu ʿalaykum.
         <br />
         Let's find your times.
       </h1>
