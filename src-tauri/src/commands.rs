@@ -112,17 +112,6 @@ pub fn dismiss_focus(app: AppHandle) {
     crate::focus::dismiss(&app);
 }
 
-/// Open (or focus) the main "Today" window, dismissing the panel first.
-#[tauri::command]
-pub fn open_main(app: AppHandle) {
-    panel::hide_all(&app);
-    if let Some(win) = app.get_webview_window(crate::MAIN_LABEL) {
-        let _ = win.show();
-        let _ = win.unminimize();
-        let _ = win.set_focus();
-    }
-}
-
 /// Detect the location from IP, fill coordinates + timezone (+ method when
 /// auto-detect is on), persist, recompute, and return the updated settings.
 #[tauri::command]
