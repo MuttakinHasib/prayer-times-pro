@@ -20,6 +20,7 @@ use tauri::Manager;
 pub(crate) const PANEL_LABEL: &str = "panel";
 pub(crate) const BACKDROP_LABEL: &str = "backdrop";
 pub(crate) const SETTINGS_LABEL: &str = "settings";
+pub(crate) const ONBOARDING_LABEL: &str = "onboarding";
 pub(crate) const TRAY_ID: &str = "tray";
 pub(crate) const STATE_EVENT: &str = "prayer://state-changed";
 pub(crate) const PANEL_W: f64 = 336.0;
@@ -53,6 +54,7 @@ pub fn run() {
             commands::detect_location,
             commands::engage_focus,
             commands::dismiss_focus,
+            commands::complete_onboarding,
         ])
         .setup(|app| {
             // Menu-bar agent: no Dock icon on macOS.
@@ -71,6 +73,7 @@ pub fn run() {
 
             // Load persisted settings into the live clock.
             let settings = settings_io::load(app.handle());
+            let onboarded = settings.did_complete_onboarding;
             app.state::<SharedClock>()
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -82,6 +85,11 @@ pub fn run() {
             focus::build_all(app.handle())?;
             tray::build(app.handle())?;
             tray::spawn_tick_loop(app.handle().clone());
+
+            // First launch: run the onboarding wizard.
+            if !onboarded {
+                build_onboarding_window(app.handle())?;
+            }
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -108,6 +116,21 @@ fn build_settings_window(app: &tauri::AppHandle) -> tauri::Result<()> {
             let _ = win.hide();
         }
     });
+    Ok(())
+}
+
+/// The first-launch onboarding wizard. Shown only when onboarding isn't complete;
+/// closed for good by `complete_onboarding`.
+fn build_onboarding_window(app: &tauri::AppHandle) -> tauri::Result<()> {
+    use tauri::{WebviewUrl, WebviewWindowBuilder};
+
+    WebviewWindowBuilder::new(app, ONBOARDING_LABEL, WebviewUrl::App("index.html".into()))
+        .title("Welcome — Prayer Times")
+        .inner_size(720.0, 580.0)
+        .resizable(false)
+        .maximizable(false)
+        .center()
+        .build()?;
     Ok(())
 }
 

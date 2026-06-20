@@ -5,6 +5,7 @@ import { Panel } from "./windows/panel/panel";
 import { Backdrop } from "./windows/backdrop/backdrop";
 import { Settings } from "./windows/settings/settings";
 import { Focus } from "./windows/focus/focus";
+import { Onboarding } from "./windows/onboarding/onboarding";
 import "@fontsource-variable/newsreader/index.css";
 import "@fontsource-variable/newsreader/standard-italic.css";
 import "@fontsource-variable/jetbrains-mono/index.css";
@@ -23,6 +24,8 @@ const rootFor = (label: string) => {
       return <Backdrop />;
     case "settings":
       return <Settings />;
+    case "onboarding":
+      return <Onboarding />;
     case "panel":
     default:
       return <Panel />;
