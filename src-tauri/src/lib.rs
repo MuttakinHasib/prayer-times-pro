@@ -56,6 +56,7 @@ pub fn run() {
             commands::open_settings,
             commands::check_for_updates,
             commands::stop_adhan,
+            commands::ensure_notification_permission,
             commands::send_test_notification,
             commands::detect_location,
             commands::engage_focus,

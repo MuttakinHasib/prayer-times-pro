@@ -89,6 +89,23 @@ pub fn check_for_updates(app: AppHandle) {
     let _ = app.emit("prayer://check-updates-requested", ());
 }
 
+/// Ensure macOS has granted notification permission, asking if we don't have it
+/// yet. Returns true if granted, false if denied (so the UI can warn).
+#[tauri::command]
+pub fn ensure_notification_permission(app: AppHandle) -> Result<bool, String> {
+    use tauri_plugin_notification::{NotificationExt, PermissionState};
+    let n = app.notification();
+    match n.permission_state() {
+        Ok(PermissionState::Granted) => Ok(true),
+        Ok(_) => match n.request_permission() {
+            Ok(PermissionState::Granted) => Ok(true),
+            Ok(_) => Ok(false),
+            Err(err) => Err(format!("Couldn't request permission: {err}")),
+        },
+        Err(err) => Err(format!("Couldn't read permission state: {err}")),
+    }
+}
+
 /// Send a sample notification so users can verify permission + sound work.
 /// Requests permission on demand if needed, and returns a human-readable error
 /// when the OS won't let us notify so the UI can surface it.

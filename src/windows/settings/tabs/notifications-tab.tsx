@@ -6,7 +6,7 @@ import {
   type PrayerNotificationConfig,
 } from "../../../lib/settings";
 import { cn } from "../../../lib/cn";
-import { sendTestNotification } from "../../../lib/ipc";
+import { ensureNotificationPermission, sendTestNotification } from "../../../lib/ipc";
 import { PRAYER_NAMES } from "../../../components/icons";
 import { Note, Row, Section, SelectField, Stepper, Toggle } from "../controls";
 
@@ -55,6 +55,8 @@ export const NotificationsTab = ({ settings, update }: Props) => {
 
   const [sampleSent, setSampleSent] = useState(false);
   const [sampleError, setSampleError] = useState<string | null>(null);
+  const [permWarning, setPermWarning] = useState<string | null>(null);
+
   const sendSample = async () => {
     setSampleError(null);
     try {
@@ -66,14 +68,28 @@ export const NotificationsTab = ({ settings, update }: Props) => {
     }
   };
 
+  const setMaster = async (enabled: boolean) => {
+    update({ masterNotificationsEnabled: enabled });
+    setPermWarning(null);
+    if (!enabled) return;
+    // Turning on — make sure macOS has actually granted permission, prompt if needed.
+    try {
+      const granted = await ensureNotificationPermission();
+      if (!granted) {
+        setPermWarning(
+          "macOS is blocking notifications. Enable them in System Settings → Notifications → prayer-times-pro.",
+        );
+      }
+    } catch (err) {
+      setPermWarning(typeof err === "string" ? err : err instanceof Error ? err.message : "Permission request failed.");
+    }
+  };
+
   return (
     <>
       <Section title="Notifications">
         <Row label="Enable prayer notifications" sublabel="Master switch for all prayer alerts.">
-          <Toggle
-            checked={settings.masterNotificationsEnabled}
-            onChange={(masterNotificationsEnabled) => update({ masterNotificationsEnabled })}
-          />
+          <Toggle checked={settings.masterNotificationsEnabled} onChange={setMaster} />
         </Row>
         <Row label="Send a sample" sublabel="Verify notifications are working.">
           <button
@@ -85,6 +101,7 @@ export const NotificationsTab = ({ settings, update }: Props) => {
           </button>
         </Row>
       </Section>
+      {permWarning && <Note>{permWarning}</Note>}
       {sampleError && <Note>{sampleError}</Note>}
 
       <Section title="Defaults">
