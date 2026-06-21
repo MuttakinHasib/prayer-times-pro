@@ -21,6 +21,7 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["tray-icon", "image-png", "macos-private-api"] }
 tauri-plugin-opener = "2"
 tauri-plugin-notification = "2"
+tauri-plugin-autostart = "2"
 # In-process Adhan playback. The bundled audio is AAC-in-MP4 (.m4a), so enable
 # Symphonia's AAC decoder + ISO-MP4 demuxer on top of rodio's defaults.
 rodio = { version = "0.20", features = ["symphonia-aac", "symphonia-isomp4"] }

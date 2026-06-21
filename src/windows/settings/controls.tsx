@@ -58,7 +58,7 @@ export const Toggle = ({
     onClick={() => onChange(!checked)}
     className={cn("relative h-[24px] w-[40px] shrink-0 rounded-full transition-colors", {
       "bg-accent": checked,
-      "bg-white/20": !checked,
+      "bg-content-subtle/50": !checked,
       "cursor-default opacity-40": disabled,
     })}
   >

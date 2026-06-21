@@ -79,6 +79,15 @@ pub enum LocationMode {
     Manual,
 }
 
+/// UI theme preference. `Auto` follows the system's prefers-color-scheme.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AppearanceTheme {
+    Dark,
+    Light,
+    Auto,
+}
+
 /// Sensible fallback early-reminder lead (minutes) when a reminder is enabled but
 /// neither the per-prayer override nor the default supplies a concrete lead.
 pub const FALLBACK_EARLY_LEAD_MINUTES: i32 = 15;
@@ -120,6 +129,7 @@ pub struct AppSettings {
     pub focus_trigger: FocusTrigger,
     pub focus_emergency_exit_enabled: bool,
 
+    pub appearance: AppearanceTheme,
     pub launch_at_login: bool,
     /// BCP-47 language tag; `None` follows the system locale.
     pub language_override: Option<String>,
@@ -156,6 +166,7 @@ impl Default for AppSettings {
             focus_blur_intensity: FocusBlurIntensity::Medium,
             focus_trigger: FocusTrigger::Obligatory,
             focus_emergency_exit_enabled: true,
+            appearance: AppearanceTheme::Auto,
             launch_at_login: false,
             language_override: None,
             master_notifications_enabled: true,

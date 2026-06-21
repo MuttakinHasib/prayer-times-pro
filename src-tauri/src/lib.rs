@@ -4,6 +4,7 @@
 //! [`tray`] (status item + tick), and [`state`] (the prayer clock).
 
 mod audio;
+mod autostart;
 mod commands;
 mod focus;
 mod location;
@@ -30,7 +31,11 @@ pub(crate) const PANEL_H: f64 = 482.0;
 pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_notification::init());
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ));
 
     #[cfg(target_os = "macos")]
     {
@@ -51,6 +56,8 @@ pub fn run() {
             commands::open_settings,
             commands::check_for_updates,
             commands::stop_adhan,
+            commands::ensure_notification_permission,
+            commands::send_test_notification,
             commands::detect_location,
             commands::engage_focus,
             commands::dismiss_focus,
@@ -75,10 +82,12 @@ pub fn run() {
             // Load persisted settings into the live clock.
             let settings = settings_io::load(app.handle());
             let onboarded = settings.did_complete_onboarding;
+            let want_autostart = settings.launch_at_login;
             app.state::<SharedClock>()
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
                 .set_settings(settings);
+            autostart::sync(app.handle(), want_autostart);
 
             panel::build(app.handle())?;
             panel::build_backdrop(app.handle())?;
