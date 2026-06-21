@@ -112,6 +112,36 @@ pub fn dismiss_focus(app: AppHandle) {
     crate::focus::dismiss(&app);
 }
 
+/// Re-open the onboarding wizard ("Run setup again" in Settings).
+#[tauri::command]
+pub fn open_onboarding(app: AppHandle) {
+    panel::hide_all(&app);
+    if let Some(win) = app.get_webview_window(crate::ONBOARDING_LABEL) {
+        let _ = win.show();
+        let _ = win.set_focus();
+    } else if let Err(err) = crate::build_onboarding_window(&app) {
+        eprintln!("onboarding: failed to build ({err})");
+    }
+}
+
+/// Mark onboarding complete, persist, and close the wizard for good.
+#[tauri::command]
+pub fn complete_onboarding(app: AppHandle, clock: tauri::State<'_, SharedClock>) {
+    let settings = {
+        let mut c = clock.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut s = c.settings();
+        s.did_complete_onboarding = true;
+        c.set_settings(s.clone());
+        s
+    };
+    if let Err(err) = settings_io::save(&app, &settings) {
+        eprintln!("settings: failed to persist ({err})");
+    }
+    if let Some(win) = app.get_webview_window(crate::ONBOARDING_LABEL) {
+        let _ = win.destroy();
+    }
+}
+
 /// Detect the location from IP, fill coordinates + timezone (+ method when
 /// auto-detect is on), persist, recompute, and return the updated settings.
 #[tauri::command]

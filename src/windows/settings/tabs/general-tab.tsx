@@ -1,4 +1,5 @@
 import type { AppSettings, MenuBarStyle, MenuBarCountdownMode } from "../../../lib/settings";
+import { openOnboarding } from "../../../lib/ipc";
 import { Note, Row, Section, SelectField, Toggle } from "../controls";
 
 interface Props {
@@ -61,6 +62,18 @@ export const GeneralTab = ({ settings, update }: Props) => (
           checked={settings.showHijriDate}
           onChange={(showHijriDate) => update({ showHijriDate })}
         />
+      </Row>
+    </Section>
+
+    <Section title="Setup">
+      <Row label="Setup wizard" sublabel="Re-run the first-launch flow.">
+        <button
+          type="button"
+          onClick={() => void openOnboarding()}
+          className="rounded-md border border-border px-3 py-1 text-[12.5px] font-medium text-content transition-colors hover:bg-surface-hover"
+        >
+          Run setup again
+        </button>
       </Row>
     </Section>
 
