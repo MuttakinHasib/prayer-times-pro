@@ -84,7 +84,8 @@ pub fn check_for_updates(app: AppHandle) {
 }
 
 /// Send a sample notification so users can verify permission + sound work.
-/// Plays the configured default sound (in-process or OS) just like a real prayer.
+/// Requests permission on demand if needed, and returns a human-readable error
+/// when the OS won't let us notify so the UI can surface it.
 #[tauri::command]
 pub fn send_test_notification(
     app: AppHandle,
@@ -92,7 +93,19 @@ pub fn send_test_notification(
     audio: tauri::State<'_, crate::audio::Audio>,
 ) -> Result<(), String> {
     use prayer_core::NotificationSound;
-    use tauri_plugin_notification::NotificationExt;
+    use tauri_plugin_notification::{NotificationExt, PermissionState};
+
+    // Ensure permission first — startup-time requests sometimes don't stick for an
+    // unsigned dev binary. Ask the user now if we're not granted yet.
+    match app.notification().permission_state() {
+        Ok(PermissionState::Granted) => {}
+        Ok(_) => match app.notification().request_permission() {
+            Ok(PermissionState::Granted) => {}
+            Ok(state) => return Err(format!("Notifications are {state:?}. Enable them in System Settings → Notifications → Prayer Times.")),
+            Err(err) => return Err(format!("Couldn't request permission: {err}")),
+        },
+        Err(err) => return Err(format!("Couldn't read permission state: {err}")),
+    }
 
     let sound = clock
         .lock()
@@ -112,7 +125,7 @@ pub fn send_test_notification(
     } else if sound == NotificationSound::SystemDefault {
         builder = builder.sound("default");
     }
-    builder.show().map_err(|e| e.to_string())?;
+    builder.show().map_err(|e| format!("Send failed: {e}"))?;
 
     if in_process {
         audio.play_sound(sound);

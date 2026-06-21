@@ -54,13 +54,15 @@ export const NotificationsTab = ({ settings, update }: Props) => {
     update({ notifications: { ...settings.notifications, [p]: { ...cfg(p), ...patch } } });
 
   const [sampleSent, setSampleSent] = useState(false);
+  const [sampleError, setSampleError] = useState<string | null>(null);
   const sendSample = async () => {
+    setSampleError(null);
     try {
       await sendTestNotification();
       setSampleSent(true);
       setTimeout(() => setSampleSent(false), 2500);
     } catch (err) {
-      console.error("sample notification failed", err);
+      setSampleError(typeof err === "string" ? err : err instanceof Error ? err.message : "Send failed.");
     }
   };
 
@@ -83,6 +85,7 @@ export const NotificationsTab = ({ settings, update }: Props) => {
           </button>
         </Row>
       </Section>
+      {sampleError && <Note>{sampleError}</Note>}
 
       <Section title="Defaults">
         <Row label="Default sound">
