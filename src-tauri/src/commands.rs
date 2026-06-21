@@ -109,6 +109,10 @@ pub fn ensure_notification_permission(app: AppHandle) -> Result<bool, String> {
 /// Send a sample notification so users can verify permission + sound work.
 /// Requests permission on demand if needed, and returns a human-readable error
 /// when the OS won't let us notify so the UI can surface it.
+///
+/// macOS quirk: notifications from the active app are routed straight to
+/// Notification Center instead of presenting a banner. We defer the post by
+/// ~600 ms so the user's click loses focus first and the banner pops as expected.
 #[tauri::command]
 pub fn send_test_notification(
     app: AppHandle,
@@ -137,23 +141,33 @@ pub fn send_test_notification(
         .notification_defaults
         .sound;
     let in_process = !matches!(sound, NotificationSound::None | NotificationSound::SystemDefault);
+    let id = SAMPLE_NOTIF_ID.fetch_add(1, Ordering::Relaxed);
 
-    let mut builder = app
-        .notification()
-        .builder()
-        .id(SAMPLE_NOTIF_ID.fetch_add(1, Ordering::Relaxed))
-        .title("Prayer Times")
-        .body("This is what a prayer notification looks like.");
-    if in_process {
-        builder = builder.sound("");
-    } else if sound == NotificationSound::SystemDefault {
-        builder = builder.sound("default");
-    }
-    builder.show().map_err(|e| format!("Send failed: {e}"))?;
-
-    if in_process {
-        audio.play_sound(sound);
-    }
+    // Hand off to a thread so we can sleep without blocking the IPC.
+    let app = app.clone();
+    let audio = audio.inner().clone();
+    std::thread::spawn(move || {
+        // 600ms gives the Settings click time to lose focus, so macOS posts a
+        // real banner instead of silently dropping it into Notification Center.
+        std::thread::sleep(std::time::Duration::from_millis(600));
+        let mut builder = app
+            .notification()
+            .builder()
+            .id(id)
+            .title("Prayer Times")
+            .body("This is what a prayer notification looks like.");
+        if in_process {
+            builder = builder.sound("");
+        } else if sound == NotificationSound::SystemDefault {
+            builder = builder.sound("default");
+        }
+        if let Err(err) = builder.show() {
+            eprintln!("sample notification failed: {err}");
+        }
+        if in_process {
+            audio.play_sound(sound);
+        }
+    });
     Ok(())
 }
 
