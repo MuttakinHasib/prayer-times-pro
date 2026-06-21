@@ -1,9 +1,15 @@
 //! IPC commands invoked from the webview.
 
+use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::PoisonError;
 
 use prayer_core::{AppSettings, MethodRegistry};
 use tauri::{AppHandle, Emitter, LogicalSize, Manager};
+
+/// Notification ids must vary per request — macOS coalesces same-id notifications
+/// and replaces the entry instead of presenting a fresh banner. Starts in the
+/// upper half of the i32 range so app-scheduler ids (small) can't collide.
+static SAMPLE_NOTIF_ID: AtomicI32 = AtomicI32::new(1_000_000_000);
 
 use crate::state::{PrayerState, SharedClock};
 use crate::{panel, settings_io, PANEL_LABEL, STATE_EVENT, TRAY_ID};
@@ -118,6 +124,7 @@ pub fn send_test_notification(
     let mut builder = app
         .notification()
         .builder()
+        .id(SAMPLE_NOTIF_ID.fetch_add(1, Ordering::Relaxed))
         .title("Prayer Times")
         .body("This is what a prayer notification looks like.");
     if in_process {

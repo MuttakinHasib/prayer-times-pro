@@ -5,12 +5,17 @@
 //! OS chime; `none` is a silent banner. A sleep/wake catch-up guard skips audio
 //! that's already stale.
 
+use std::sync::atomic::{AtomicI32, Ordering};
+
 use prayer_core::{FocusBlurIntensity, NotificationSound};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_notification::NotificationExt;
 
 use crate::audio::Audio;
+
+/// Unique id per banner so macOS presents fresh banners instead of coalescing.
+static NOTIF_ID: AtomicI32 = AtomicI32::new(1);
 
 /// Emitted with `true` when an Adhan starts playing, `false` when stopped, so the
 /// panel can offer a Stop control.
@@ -55,7 +60,12 @@ pub fn fire(app: &AppHandle, audio: &Audio, events: &[NotifEvent], now_ms: i64) 
 
         // Send the banner. If we'll play in-process audio, keep the banner silent to
         // avoid double sound; otherwise let the OS chime if the user picked Default.
-        let mut builder = app.notification().builder().title(&ev.title).body(&ev.body);
+        let mut builder = app
+            .notification()
+            .builder()
+            .id(NOTIF_ID.fetch_add(1, Ordering::Relaxed))
+            .title(&ev.title)
+            .body(&ev.body);
         if in_process {
             builder = builder.sound(""); // suppress OS sound
         } else if ev.sound == NotificationSound::SystemDefault {
