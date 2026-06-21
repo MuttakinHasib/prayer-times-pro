@@ -325,7 +325,8 @@ fn build_events(settings: &AppSettings, prayer: Prayer, time: DateTime<Tz>) -> V
         fire_ms: at,
         title: name.to_string(),
         body: format!("It's time for {name}."),
-        play_adhan: cfg.play_full_adhan,
+        sound: cfg.sound,
+        play_full_adhan: cfg.play_full_adhan,
         madinah,
         focus,
     }];
@@ -336,7 +337,9 @@ fn build_events(settings: &AppSettings, prayer: Prayer, time: DateTime<Tz>) -> V
             fire_ms: at - lead as i64 * 60_000,
             title: format!("{name} in {lead} min"),
             body: format!("{name} begins soon."),
-            play_adhan: false,
+            // Reminders use the same chime, never the full Adhan.
+            sound: cfg.sound,
+            play_full_adhan: false,
             madinah,
             focus: None,
         });
@@ -347,7 +350,8 @@ fn build_events(settings: &AppSettings, prayer: Prayer, time: DateTime<Tz>) -> V
             fire_ms: at + cfg.iqamah_offset_minutes as i64 * 60_000,
             title: format!("Iqamah · {name}"),
             body: format!("Jamaat for {name}."),
-            play_adhan: false,
+            sound: cfg.sound,
+            play_full_adhan: false,
             madinah,
             focus: None,
         });

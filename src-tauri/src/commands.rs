@@ -84,15 +84,40 @@ pub fn check_for_updates(app: AppHandle) {
 }
 
 /// Send a sample notification so users can verify permission + sound work.
+/// Plays the configured default sound (in-process or OS) just like a real prayer.
 #[tauri::command]
-pub fn send_test_notification(app: AppHandle) -> Result<(), String> {
+pub fn send_test_notification(
+    app: AppHandle,
+    clock: tauri::State<'_, SharedClock>,
+    audio: tauri::State<'_, crate::audio::Audio>,
+) -> Result<(), String> {
+    use prayer_core::NotificationSound;
     use tauri_plugin_notification::NotificationExt;
-    app.notification()
+
+    let sound = clock
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .settings()
+        .notification_defaults
+        .sound;
+    let in_process = !matches!(sound, NotificationSound::None | NotificationSound::SystemDefault);
+
+    let mut builder = app
+        .notification()
         .builder()
         .title("Prayer Times")
-        .body("This is what a prayer notification looks like.")
-        .show()
-        .map_err(|e| e.to_string())
+        .body("This is what a prayer notification looks like.");
+    if in_process {
+        builder = builder.sound("");
+    } else if sound == NotificationSound::SystemDefault {
+        builder = builder.sound("default");
+    }
+    builder.show().map_err(|e| e.to_string())?;
+
+    if in_process {
+        audio.play_sound(sound);
+    }
+    Ok(())
 }
 
 /// Stop any Adhan currently playing in-process.
