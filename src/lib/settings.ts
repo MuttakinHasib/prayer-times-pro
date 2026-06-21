@@ -18,6 +18,7 @@ export type FocusBlurIntensity = "low" | "medium" | "high" | "opaque";
 export type FocusTrigger = "obligatory" | "all" | "fajrIsha";
 export type CalculationMode = "calculated" | "manual";
 export type LocationMode = "automatic" | "manual";
+export type AppearanceTheme = "dark" | "light" | "auto";
 export type HighLatitudeRule =
   | "automatic"
   | "none"
@@ -77,6 +78,7 @@ export interface AppSettings {
   focusBlurIntensity: FocusBlurIntensity;
   focusTrigger: FocusTrigger;
   focusEmergencyExitEnabled: boolean;
+  appearance: AppearanceTheme;
   launchAtLogin: boolean;
   languageOverride: string | null;
   masterNotificationsEnabled: boolean;

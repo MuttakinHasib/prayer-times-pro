@@ -1,5 +1,11 @@
 import { create } from "zustand";
 import { applySettings, detectLocation, getSettings, type AppSettings } from "../lib/settings";
+import { applyTheme } from "../lib/theme";
+
+const setSettings = (set: (partial: { settings: AppSettings | null }) => void, s: AppSettings | null) => {
+  set({ settings: s });
+  if (s) applyTheme(s.appearance);
+};
 
 interface SettingsStore {
   settings: AppSettings | null;
@@ -14,7 +20,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   settings: null,
   hydrate: async () => {
     try {
-      set({ settings: await getSettings() });
+      setSettings(set, await getSettings());
     } catch (err) {
       console.error("get_settings failed", err);
     }
@@ -23,17 +29,17 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     const current = get().settings;
     if (!current) return;
     const next = { ...current, ...patch };
-    set({ settings: next });
+    setSettings(set, next);
     // Optimistic: roll back to the last-persisted snapshot if the write fails,
     // so the UI never shows a value the backend never stored.
     void applySettings(next).catch((err) => {
       console.error("apply_settings failed", err);
-      set({ settings: current });
+      setSettings(set, current);
     });
   },
   detect: async () => {
     // Rust persists + applies; just reflect the returned settings. Errors bubble
     // so the caller can surface them.
-    set({ settings: await detectLocation() });
+    setSettings(set, await detectLocation());
   },
 }));

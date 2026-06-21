@@ -88,7 +88,7 @@ export const CalculationTab = ({ settings, update }: Props) => {
                   type="time"
                   value={toClock(settings.jamaatTimes[prayer] ?? 0)}
                   onChange={(e) => setJamaat(prayer, fromClock(e.target.value))}
-                  className="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-[12.5px] text-content"
+                  className="rounded-md border border-border bg-elevated px-2 py-1 text-[12.5px] text-content"
                 />
               </Row>
             ))}

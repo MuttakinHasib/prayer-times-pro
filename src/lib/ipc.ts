@@ -43,6 +43,7 @@ export const completeOnboarding = () => invoke<void>("complete_onboarding");
 export const openOnboarding = () => invoke<void>("open_onboarding");
 export const checkForUpdates = () => invoke<void>("check_for_updates");
 export const stopAdhan = () => invoke<void>("stop_adhan");
+export const sendTestNotification = () => invoke<void>("send_test_notification");
 
 /// Subscribe to schedule-change pushes from Rust. Returns an unlisten fn.
 export const onStateChanged = (cb: (s: PrayerState) => void): Promise<UnlistenFn> =>

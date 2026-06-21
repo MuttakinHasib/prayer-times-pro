@@ -55,6 +55,7 @@ pub fn apply_settings(app: AppHandle, clock: tauri::State<'_, SharedClock>, sett
     if let Err(err) = settings_io::save(&app, &settings) {
         eprintln!("settings: failed to persist ({err})");
     }
+    crate::autostart::sync(&app, settings.launch_at_login);
     let (label, snapshot) = {
         let mut c = clock.lock().unwrap_or_else(PoisonError::into_inner);
         c.set_settings(settings);
@@ -80,6 +81,18 @@ pub fn open_settings(app: AppHandle) {
 #[tauri::command]
 pub fn check_for_updates(app: AppHandle) {
     let _ = app.emit("prayer://check-updates-requested", ());
+}
+
+/// Send a sample notification so users can verify permission + sound work.
+#[tauri::command]
+pub fn send_test_notification(app: AppHandle) -> Result<(), String> {
+    use tauri_plugin_notification::NotificationExt;
+    app.notification()
+        .builder()
+        .title("Prayer Times")
+        .body("This is what a prayer notification looks like.")
+        .show()
+        .map_err(|e| e.to_string())
 }
 
 /// Stop any Adhan currently playing in-process.
