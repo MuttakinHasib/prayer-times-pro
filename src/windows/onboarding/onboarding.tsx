@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "../../lib/cn";
 import { clock } from "../../lib/format";
-import { completeOnboarding } from "../../lib/ipc";
+import { completeOnboarding, ensureNotificationPermission } from "../../lib/ipc";
 import type { PrayerInstant } from "../../lib/ipc";
 import { useSettingsStore } from "../../stores/settings.store";
 import { initPrayerStore, usePrayerStore } from "../../stores/prayer.store";
@@ -177,6 +177,22 @@ const Coord = ({ label, onChange }: { label: string; onChange: (v: number) => vo
 
 const NotificationsStep = ({ enabled, onNext }: { enabled: boolean; onNext: () => void }) => {
   const update = useSettingsStore((s) => s.update);
+  const [warning, setWarning] = useState<string | null>(null);
+
+  const setEnabled = async (next: boolean) => {
+    update({ masterNotificationsEnabled: next });
+    setWarning(null);
+    if (!next) return;
+    try {
+      const granted = await ensureNotificationPermission();
+      if (!granted) {
+        setWarning("macOS blocked notifications. You can enable them later in System Settings.");
+      }
+    } catch (err) {
+      setWarning(typeof err === "string" ? err : err instanceof Error ? err.message : "Permission request failed.");
+    }
+  };
+
   return (
     <>
       <Glyph />
@@ -187,11 +203,9 @@ const NotificationsStep = ({ enabled, onNext }: { enabled: boolean; onNext: () =
       </p>
       <div className="mt-8 flex w-full items-center justify-between rounded-xl border border-border bg-surface px-4 py-3.5">
         <span className="text-[14px]">Enable prayer notifications</span>
-        <Toggle
-          checked={enabled}
-          onChange={(masterNotificationsEnabled) => update({ masterNotificationsEnabled })}
-        />
+        <Toggle checked={enabled} onChange={setEnabled} />
       </div>
+      {warning && <p className="mt-3 text-[12.5px] text-content-subtle">{warning}</p>}
       <div className="mt-9 w-full">
         <Primary onClick={onNext}>Continue</Primary>
       </div>

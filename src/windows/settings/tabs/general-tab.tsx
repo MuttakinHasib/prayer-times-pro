@@ -1,6 +1,11 @@
-import type { AppSettings, MenuBarStyle, MenuBarCountdownMode } from "../../../lib/settings";
+import type {
+  AppSettings,
+  AppearanceTheme,
+  MenuBarStyle,
+  MenuBarCountdownMode,
+} from "../../../lib/settings";
 import { openOnboarding } from "../../../lib/ipc";
-import { Note, Row, Section, SelectField, Toggle } from "../controls";
+import { Note, Row, Section, Segmented, SelectField, Toggle } from "../controls";
 
 interface Props {
   settings: AppSettings;
@@ -22,10 +27,26 @@ const COUNTDOWN_OPTIONS: { value: MenuBarCountdownMode; label: string }[] = [
   { value: "currentWaqt", label: "Time left in current prayer" },
 ];
 
+const APPEARANCE_OPTIONS: { value: AppearanceTheme; label: string }[] = [
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+  { value: "auto", label: "Auto" },
+];
+
 export const GeneralTab = ({ settings, update }: Props) => (
   <>
+    <Section title="Appearance">
+      <Row label="Theme" sublabel="Auto follows your system setting.">
+        <Segmented
+          value={settings.appearance}
+          options={APPEARANCE_OPTIONS}
+          onChange={(appearance) => update({ appearance })}
+        />
+      </Row>
+    </Section>
+
     <Section title="Startup">
-      <Row label="Launch at login">
+      <Row label="Launch at login" sublabel="Open Prayer Times when you sign in.">
         <Toggle
           checked={settings.launchAtLogin}
           onChange={(launchAtLogin) => update({ launchAtLogin })}
@@ -85,6 +106,6 @@ export const GeneralTab = ({ settings, update }: Props) => (
         />
       </Row>
     </Section>
-    <Note>Auto-update lands in a later milestone; the preference is saved now.</Note>
+    <Note>The updater itself ships with packaging; this preference is honoured then.</Note>
   </>
 );

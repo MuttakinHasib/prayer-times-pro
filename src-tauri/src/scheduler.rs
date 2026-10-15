@@ -1,22 +1,29 @@
 //! Prayer notifications + Adhan. The Rust clock owns the schedule: on each tick
 //! the clock returns the [`NotifEvent`]s that just came due, and [`fire`] delivers
-//! them — an OS banner for every event, plus in-process Adhan audio at the prayer
-//! instant. A sleep/wake catch-up guard skips Adhan that's already stale.
+//! them. The user's chosen sound plays in-process for non-`systemDefault` sounds
+//! (so the banner is sent silent to avoid double audio); `systemDefault` lets the
+//! OS chime; `none` is a silent banner. A sleep/wake catch-up guard skips audio
+//! that's already stale.
 
-use prayer_core::FocusBlurIntensity;
+use std::sync::atomic::{AtomicI32, Ordering};
+
+use prayer_core::{FocusBlurIntensity, NotificationSound};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_notification::NotificationExt;
 
 use crate::audio::Audio;
 
+/// Unique id per banner so macOS presents fresh banners instead of coalescing.
+static NOTIF_ID: AtomicI32 = AtomicI32::new(1);
+
 /// Emitted with `true` when an Adhan starts playing, `false` when stopped, so the
 /// panel can offer a Stop control.
 pub const ADHAN_EVENT: &str = "prayer://adhan-state";
 
-/// Don't blast a full Adhan that we only reached late (e.g. waking from sleep
-/// well past the prayer instant); the banner still informs, but the audio is skipped.
-const ADHAN_STALE_MS: i64 = 10_000;
+/// Don't blast audio for a sound we only reached late (e.g. after sleep); the
+/// banner still informs.
+const AUDIO_STALE_MS: i64 = 10_000;
 
 /// What an athan event tells Focus Mode to display when it engages.
 #[derive(Clone, Serialize)]
@@ -34,33 +41,59 @@ pub struct NotifEvent {
     pub fire_ms: i64,
     pub title: String,
     pub body: String,
-    /// Play the full Adhan in-process at this event (athan events for opted-in prayers).
-    pub play_adhan: bool,
-    /// Which Adhan recording to use.
+    /// Sound to play at this event (per the resolved per-prayer config).
+    pub sound: NotificationSound,
+    /// Play the full Adhan recording at this event (athan events for opted-in prayers).
+    pub play_full_adhan: bool,
+    /// Which Adhan recording to use (when `play_full_adhan` is true).
     pub madinah: bool,
     /// Present on athan events that should engage Focus Mode.
     pub focus: Option<FocusCue>,
 }
 
-/// Deliver the due events: an OS banner for each, and Adhan audio for athan events
-/// that aren't stale.
+/// Deliver the due events: an OS banner for each, audio for events that aren't
+/// stale, and Focus Mode for the matching athan event.
 pub fn fire(app: &AppHandle, audio: &Audio, events: &[NotifEvent], now_ms: i64) {
     for ev in events {
-        if let Err(err) = app
+        let stale = now_ms - ev.fire_ms > AUDIO_STALE_MS;
+        let in_process = !stale && (ev.play_full_adhan || in_process_sound(ev.sound));
+
+        // Send the banner. If we'll play in-process audio, keep the banner silent to
+        // avoid double sound; otherwise let the OS chime if the user picked Default.
+        let mut builder = app
             .notification()
             .builder()
+            .id(NOTIF_ID.fetch_add(1, Ordering::Relaxed))
             .title(&ev.title)
-            .body(&ev.body)
-            .show()
-        {
+            .body(&ev.body);
+        if in_process {
+            builder = builder.sound(""); // suppress OS sound
+        } else if ev.sound == NotificationSound::SystemDefault {
+            builder = builder.sound("default");
+        }
+        if let Err(err) = builder.show() {
             eprintln!("notification show failed: {err}");
         }
-        if ev.play_adhan && now_ms - ev.fire_ms <= ADHAN_STALE_MS {
-            audio.play_adhan(ev.madinah);
-            let _ = app.emit(ADHAN_EVENT, true);
+
+        if in_process {
+            let long = if ev.play_full_adhan {
+                audio.play_full_adhan(ev.madinah);
+                true
+            } else {
+                audio.play_sound(ev.sound)
+            };
+            if long {
+                let _ = app.emit(ADHAN_EVENT, true);
+            }
         }
+
         if let Some(cue) = &ev.focus {
             crate::focus::engage(app, cue);
         }
     }
+}
+
+/// Whether this sound plays in-process via rodio (rather than the OS / silent).
+fn in_process_sound(sound: NotificationSound) -> bool {
+    !matches!(sound, NotificationSound::None | NotificationSound::SystemDefault)
 }

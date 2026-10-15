@@ -34,7 +34,7 @@ const Num = ({
     value={value}
     step={step}
     onChange={(e) => onChange(Number(e.target.value))}
-    className="w-[110px] rounded-md border border-white/10 bg-white/10 px-2 py-1 text-right text-[12.5px] tabular-nums text-content"
+    className="w-[110px] rounded-md border border-border bg-elevated px-2 py-1 text-right text-[12.5px] tabular-nums text-content"
   />
 );
 
@@ -118,7 +118,7 @@ export const LocationTab = ({ settings, update }: Props) => {
               type="text"
               value={settings.timezoneOverride}
               onChange={(e) => update({ timezoneOverride: e.target.value })}
-              className="w-[160px] rounded-md border border-white/10 bg-white/10 px-2 py-1 text-[12.5px] text-content"
+              className="w-[160px] rounded-md border border-border bg-elevated px-2 py-1 text-[12.5px] text-content"
             />
           </Row>
         )}

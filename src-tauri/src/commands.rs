@@ -1,9 +1,15 @@
 //! IPC commands invoked from the webview.
 
+use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::PoisonError;
 
 use prayer_core::{AppSettings, MethodRegistry};
 use tauri::{AppHandle, Emitter, LogicalSize, Manager};
+
+/// Notification ids must vary per request — macOS coalesces same-id notifications
+/// and replaces the entry instead of presenting a fresh banner. Starts in the
+/// upper half of the i32 range so app-scheduler ids (small) can't collide.
+static SAMPLE_NOTIF_ID: AtomicI32 = AtomicI32::new(1_000_000_000);
 
 use crate::state::{PrayerState, SharedClock};
 use crate::{panel, settings_io, PANEL_LABEL, STATE_EVENT, TRAY_ID};
@@ -55,6 +61,7 @@ pub fn apply_settings(app: AppHandle, clock: tauri::State<'_, SharedClock>, sett
     if let Err(err) = settings_io::save(&app, &settings) {
         eprintln!("settings: failed to persist ({err})");
     }
+    crate::autostart::sync(&app, settings.launch_at_login);
     let (label, snapshot) = {
         let mut c = clock.lock().unwrap_or_else(PoisonError::into_inner);
         c.set_settings(settings);
@@ -80,6 +87,88 @@ pub fn open_settings(app: AppHandle) {
 #[tauri::command]
 pub fn check_for_updates(app: AppHandle) {
     let _ = app.emit("prayer://check-updates-requested", ());
+}
+
+/// Ensure macOS has granted notification permission, asking if we don't have it
+/// yet. Returns true if granted, false if denied (so the UI can warn).
+#[tauri::command]
+pub fn ensure_notification_permission(app: AppHandle) -> Result<bool, String> {
+    use tauri_plugin_notification::{NotificationExt, PermissionState};
+    let n = app.notification();
+    match n.permission_state() {
+        Ok(PermissionState::Granted) => Ok(true),
+        Ok(_) => match n.request_permission() {
+            Ok(PermissionState::Granted) => Ok(true),
+            Ok(_) => Ok(false),
+            Err(err) => Err(format!("Couldn't request permission: {err}")),
+        },
+        Err(err) => Err(format!("Couldn't read permission state: {err}")),
+    }
+}
+
+/// Send a sample notification so users can verify permission + sound work.
+/// Requests permission on demand if needed, and returns a human-readable error
+/// when the OS won't let us notify so the UI can surface it.
+///
+/// macOS quirk: notifications from the active app are routed straight to
+/// Notification Center instead of presenting a banner. We defer the post by
+/// ~600 ms so the user's click loses focus first and the banner pops as expected.
+#[tauri::command]
+pub fn send_test_notification(
+    app: AppHandle,
+    clock: tauri::State<'_, SharedClock>,
+    audio: tauri::State<'_, crate::audio::Audio>,
+) -> Result<(), String> {
+    use prayer_core::NotificationSound;
+    use tauri_plugin_notification::{NotificationExt, PermissionState};
+
+    // Ensure permission first — startup-time requests sometimes don't stick for an
+    // unsigned dev binary. Ask the user now if we're not granted yet.
+    match app.notification().permission_state() {
+        Ok(PermissionState::Granted) => {}
+        Ok(_) => match app.notification().request_permission() {
+            Ok(PermissionState::Granted) => {}
+            Ok(state) => return Err(format!("Notifications are {state:?}. Enable them in System Settings → Notifications → Prayer Times.")),
+            Err(err) => return Err(format!("Couldn't request permission: {err}")),
+        },
+        Err(err) => return Err(format!("Couldn't read permission state: {err}")),
+    }
+
+    let sound = clock
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .settings()
+        .notification_defaults
+        .sound;
+    let in_process = !matches!(sound, NotificationSound::None | NotificationSound::SystemDefault);
+    let id = SAMPLE_NOTIF_ID.fetch_add(1, Ordering::Relaxed);
+
+    // Hand off to a thread so we can sleep without blocking the IPC.
+    let app = app.clone();
+    let audio = audio.inner().clone();
+    std::thread::spawn(move || {
+        // 600ms gives the Settings click time to lose focus, so macOS posts a
+        // real banner instead of silently dropping it into Notification Center.
+        std::thread::sleep(std::time::Duration::from_millis(600));
+        let mut builder = app
+            .notification()
+            .builder()
+            .id(id)
+            .title("Prayer Times")
+            .body("This is what a prayer notification looks like.");
+        if in_process {
+            builder = builder.sound("");
+        } else if sound == NotificationSound::SystemDefault {
+            builder = builder.sound("default");
+        }
+        if let Err(err) = builder.show() {
+            eprintln!("sample notification failed: {err}");
+        }
+        if in_process {
+            audio.play_sound(sound);
+        }
+    });
+    Ok(())
 }
 
 /// Stop any Adhan currently playing in-process.
